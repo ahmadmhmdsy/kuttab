@@ -5,6 +5,7 @@ import { buildTrack, exportPack, indexPack, parsePack, planFromPack, planProgres
 import { useT } from "../i18n.ts";
 import { planLang, refreshCounters, saveKb, services, useStore } from "../state.ts";
 import { kbEmbed, makeCtx } from "../ai.ts";
+import { SearchDeclined, webAdapter } from "../web.ts";
 import { Card, ErrorBox, Spinner } from "../components/common.tsx";
 
 const RAW = import.meta.glob("../../../../packs/*.kuttab", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
@@ -192,8 +193,13 @@ function NewCourse({ onCreated }: { onCreated: (planId: string) => void }) {
       const ctx = await makeCtx();
       const p = { ...(profile ?? { goal: "", level: "new" as const, minutesPerDay: 20, style: "examples-first" as const }), lang };
       const { course, kb } = services();
-      // Web search adapters arrive with T-23; until then "mine then web" builds from the library.
-      const built = await buildTrack(ctx, { topic: topic.trim(), profile: p, mix, kb, embed: await kbEmbed(), makeId: slug });
+      const input = { topic: topic.trim(), profile: p, mix, kb, embed: await kbEmbed(), makeId: slug };
+      const web = webAdapter(() => confirm(t("searchApprove")));
+      // A declined search builds from the library alone.
+      const built = await buildTrack(ctx, { ...input, web }).catch((e) => {
+        if (e instanceof SearchDeclined) return buildTrack(ctx, input);
+        throw e;
+      });
       await course.savePlan(built.plan);
       await course.saveResources(built.pack);
       if (built.added.length) await saveKb();

@@ -1,6 +1,9 @@
 // Kuttab host. Three jobs: a key-value store in SQLite (app data dir), API keys
 // in the OS keychain, and saving exports through a native dialog. Secret values
 // are never logged or returned anywhere except to the caller that asked.
+// The search window (browser.rs) is the fourth.
+mod browser;
+
 use std::sync::Mutex;
 
 use rusqlite::{Connection, OptionalExtension, params};
@@ -109,6 +112,7 @@ pub fn run() {
         .setup(|app| {
             let conn = open_db(app.handle())?;
             app.manage(Db(Mutex::new(conn)));
+            app.manage(browser::Browser::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -119,7 +123,11 @@ pub fn run() {
             secret_get,
             secret_set,
             secret_delete,
-            export_file
+            export_file,
+            browser::browser_open,
+            browser::browser_capture,
+            browser::browser_show,
+            browser::browser_close
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

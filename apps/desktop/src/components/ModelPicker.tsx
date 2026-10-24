@@ -163,14 +163,15 @@ export function ModelPicker({ role, value, onChange, emptyLabel }: { role: Role;
   );
 }
 
-function KeyField({ provider }: { provider: string }) {
+/** `secretId` stores the key under another name (search APIs use their own keys). */
+export function KeyField({ provider, secretId = keyId(provider) }: { provider: string; secretId?: string }) {
   const t = useT();
   const secrets = services().platform.secrets;
   const [saved, setSaved] = useState(false);
   const [draft, setDraft] = useState("");
   useEffect(() => {
-    void secrets.get(keyId(provider)).then((k) => setSaved(!!k));
-  }, [provider, secrets]);
+    void secrets.get(secretId).then((k) => setSaved(!!k));
+  }, [secretId, secrets]);
   return (
     <div className="key-field">
       <label>
@@ -180,7 +181,7 @@ function KeyField({ provider }: { provider: string }) {
           <button
             disabled={!draft.trim()}
             onClick={async () => {
-              await secrets.set(keyId(provider), draft.trim());
+              await secrets.set(secretId, draft.trim());
               setDraft("");
               setSaved(true);
             }}
@@ -190,7 +191,7 @@ function KeyField({ provider }: { provider: string }) {
           {saved && (
             <button
               onClick={async () => {
-                await secrets.delete(keyId(provider));
+                await secrets.delete(secretId);
                 setSaved(false);
               }}
             >

@@ -1,9 +1,11 @@
 // The learning plan, shown to the learner, who can reorder, rename, skip,
 // remove and add steps.
 import { useEffect, useState } from "react";
-import { addObjective, itemState, moveObjective, nextObjective, planProgress, removeObjective, renameObjective, setStatus, type MasteryMap, type Plan, type PlanItem, type ResourcePack } from "@kuttab/engine";
+import { addObjective, itemState, moveObjective, nextObjective, planProgress, removeObjective, renameObjective, searchMore, setStatus, type MasteryMap, type Plan, type PlanItem, type ResourcePack } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
-import { services, useStore } from "../state.ts";
+import { saveKb, services, useStore } from "../state.ts";
+import { kbEmbed } from "../ai.ts";
+import { SearchDeclined, webAdapter } from "../web.ts";
 import { Card, ErrorBox, Spinner } from "../components/common.tsx";
 
 const STATE_LABEL: Record<string, StrKey> = { locked: "locked", available: "available", mastered: "mastered", skipped: "skipped" };
@@ -62,7 +64,7 @@ export function PlanView({ planId }: { planId: string }) {
       </button>
       <h1 dir="auto">{plan.title}</h1>
       <p className="muted">{t("planHelp")}</p>
-      {pack && <PackLine pack={pack} />}
+      {pack && <PackLine pack={pack} objective={next} onPack={setPack} />}
       <div className="progress" aria-label={t("progress")}>
         <span style={{ inlineSize: `${pct}%` }} />
       </div>
@@ -248,15 +250,49 @@ function AddStep({ plan, onAdd }: { plan: Plan; onAdd: (o: { id: string; title: 
 }
 
 /** What the track was built from; the pack is what lessons read, so it works offline. */
-function PackLine({ pack }: { pack: ResourcePack }) {
+function PackLine({ pack, objective, onPack }: { pack: ResourcePack; objective?: PlanItem; onPack: (p: ResourcePack) => void }) {
   const t = useT();
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string>();
+  const [err, setErr] = useState<unknown>();
+  // A mid-track search for the next objective; works on any source mix.
+  const more = async () => {
+    if (!objective) return;
+    setBusy(true);
+    setErr(undefined);
+    setNote(undefined);
+    try {
+      const { course, kb } = services();
+      const web = webAdapter(() => confirm(t("searchApprove")));
+      const got = await searchMore({ pack, objective, query: "", web, kb, embed: await kbEmbed() });
+      await course.saveResources(got.pack);
+      if (got.added.length) await saveKb();
+      onPack(got.pack);
+      setNote(t("searchMoreDone", { n: got.found.length }));
+    } catch (e) {
+      if (e instanceof SearchDeclined) setNote(t("searchDeclined"));
+      else setErr(e);
+    } finally {
+      setBusy(false);
+    }
+  };
   const all = Object.values(pack.objectives).flat();
   const sources = new Set(all.map((e) => e.sourceId)).size;
   const web = new Set(all.filter((e) => e.url).map((e) => e.sourceId)).size;
   return (
-    <p className="muted small pack-line">
+    <div className="muted small pack-line">
       {pack.mix === "none" ? t("packNone") : t("packLine", { n: all.length, sources, web })}
       {pack.webSkipped && <> · {t("webSkipped")}</>}
-    </p>
+      {objective && (
+        <>
+          {" "}
+          <button className="link" disabled={busy} onClick={() => void more()}>
+            {busy ? <Spinner /> : t("searchMore")}
+          </button>
+        </>
+      )}
+      {note && <> · {note}</>}
+      {err !== undefined && <ErrorBox error={err} />}
+    </div>
   );
 }

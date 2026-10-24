@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { Course, K, liveStreak, type Lang, type LearnerProfile } from "@kuttab/engine";
 import { KnowledgeBase, type KbSnapshot } from "@kuttab/kb";
 import type { LabRegistry } from "@kuttab/labs";
-import type { PriceOverride } from "@kuttab/llm-gateway";
+import type { PriceOverride, SearchEngineId } from "@kuttab/llm-gateway";
 import type { Platform } from "./platform/index.ts";
 
 export interface ModelChoice {
@@ -13,6 +13,9 @@ export interface ModelChoice {
   model: string;
   baseURL?: string;
 }
+
+/** How researched tracks reach the web (T-23). "native" uses the teacher provider's own search. */
+export type SearchKind = "off" | "browser" | "native" | SearchEngineId;
 
 export type WhisperSize = "tiny" | "base" | "small";
 
@@ -35,6 +38,8 @@ export interface Settings {
   /** Teacher tools the learner switched off (ADR 0001). */
   toolsOff: string[];
   askBeforeCode: boolean;
+  /** headless: the browser route works in a hidden window. */
+  search: { kind: SearchKind; searxngUrl?: string; headless?: boolean };
   onboarded: boolean;
 }
 
@@ -50,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   textSize: "normal",
   toolsOff: [],
   askBeforeCode: true,
+  search: { kind: "off" },
   onboarded: false,
 };
 

@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { TEACHER_TOOLS, type ToolName } from "@kuttab/engine";
-import { CATALOG, PROVIDERS, supportsTools } from "@kuttab/llm-gateway";
+import { CATALOG, nativeSearchProvider, PROVIDERS, SEARCH_ENGINES, supportsTools } from "@kuttab/llm-gateway";
 import { applyDocumentLang, useT } from "../i18n.ts";
-import { modelKey, resetUsage, services, useStore, type ModelChoice, type Settings as AppSettings, type Usage, type WhisperSize } from "../state.ts";
+import { modelKey, resetUsage, services, useStore, type ModelChoice, type SearchKind, type Settings as AppSettings, type Usage, type WhisperSize } from "../state.ts";
 import { errorText, keyId } from "../ai.ts";
 import { BackupError, makeBackup, MAX_BACKUP_BYTES, parseBackup, restoreBackup } from "../backup.ts";
-import { ModelPicker } from "../components/ModelPicker.tsx";
+import { KeyField, ModelPicker } from "../components/ModelPicker.tsx";
+import { searchKeyId } from "../web.ts";
 import { ProfileForm } from "../components/ProfileForm.tsx";
 import { Card } from "../components/common.tsx";
 import { canSpeak, WHISPER_SIZE_MB } from "../speech.ts";
@@ -169,7 +170,64 @@ function TeacherPanel() {
           {t("askBeforeCode")}
         </label>
       </Card>
+      <SearchCard />
     </>
+  );
+}
+
+/** Where researched tracks search the web. Free options first (decision 0002, item 4). */
+function SearchCard() {
+  const t = useT();
+  const { settings, updateSettings } = useStore();
+  const { kind, searxngUrl } = settings.search;
+  const hasWindow = !!services().platform.web;
+  const native = settings.teacher && nativeSearchProvider(settings.teacher.provider);
+  const set = (patch: Partial<AppSettings["search"]>) => updateSettings({ search: { ...settings.search, ...patch } });
+  const engine = SEARCH_ENGINES.find((e) => e.id === kind);
+  return (
+    <Card>
+      <h2>{t("webSearch")}</h2>
+      <label>
+        {t("webSearchHow")}
+        <select value={kind} onChange={(e) => set({ kind: e.target.value as SearchKind })}>
+          <option value="off">{t("searchOff")}</option>
+          <option value="browser" disabled={!hasWindow}>
+            {t("searchBrowser")}
+          </option>
+          <option value="native" disabled={!native}>
+            {t("searchNative")}
+          </option>
+          {SEARCH_ENGINES.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {kind === "browser" && (
+        <>
+          <p className="muted small">{t("searchBrowserNote")}</p>
+          <label className="inline">
+            <input type="checkbox" checked={!!settings.search.headless} onChange={(e) => set({ headless: e.target.checked || undefined })} />
+            {t("searchHeadless")}
+          </label>
+        </>
+      )}
+      {kind === "native" && <p className="muted small">{t("searchNativeNote")}</p>}
+      {engine?.id === "searxng" && (
+        <label>
+          {t("searxngUrl")}
+          <input dir="ltr" value={searxngUrl ?? ""} placeholder="http://localhost:8888" onChange={(e) => set({ searxngUrl: e.target.value.trim() || undefined })} />
+        </label>
+      )}
+      {engine?.needsKey && <KeyField provider={engine.id} secretId={searchKeyId(engine.id)} />}
+      {engine && (
+        <button className="link" onClick={() => void services().platform.openUrl(engine.help)}>
+          {t("searchHelp")}
+        </button>
+      )}
+      <p className="muted small">{t("searchAsk")}</p>
+    </Card>
   );
 }
 

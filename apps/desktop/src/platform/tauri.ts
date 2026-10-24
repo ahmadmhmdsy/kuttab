@@ -1,11 +1,12 @@
 // Tauri host. HTTP goes through Rust (no CORS), keys through the OS keychain,
 // data through SQLite. Key values cross the IPC bridge only to be stored or used.
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import type { KvStore } from "@kuttab/engine";
 import type { FetchFn } from "@kuttab/llm-gateway";
-import type { Platform } from "./types.ts";
+import type { PageCapture, Platform, WebWindow } from "./types.ts";
 
 /** Strips the WebView Origin header so local servers and cloud APIs see a server-side call (spike T-3). */
 const fetchNoOrigin: FetchFn = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -30,6 +31,33 @@ const store: KvStore = {
   },
 };
 
+const web: WebWindow = {
+  async open(url, visible = true) {
+    let done = () => {};
+    const loaded = new Promise<void>((resolve) => {
+      done = resolve;
+      setTimeout(resolve, 20000);
+    });
+    // Only the requested site counts; a late load event from the previous page does not.
+    const host = (u: string) => new URL(u).hostname.replace(/^www\./, "");
+    const want = host(url);
+    const stop = await listen<string>("browser-loaded", (e) => {
+      if (host(e.payload).endsWith(want) || want.endsWith(host(e.payload))) done();
+    });
+    try {
+      await invoke("browser_open", { url, visible });
+      await loaded;
+    } finally {
+      stop();
+    }
+  },
+  async capture(selector) {
+    return JSON.parse(await invoke<string>("browser_capture", { selector })) as PageCapture;
+  },
+  show: () => invoke("browser_show"),
+  close: () => invoke("browser_close"),
+};
+
 export function tauriPlatform(): Platform {
   return {
     kind: "tauri",
@@ -51,5 +79,6 @@ export function tauriPlatform(): Platform {
       return invoke<boolean>("export_file", { name, contents });
     },
     openUrl: (url) => openUrl(url),
+    web,
   };
 }
