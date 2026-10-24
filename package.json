@@ -9,7 +9,7 @@
     "build": "pnpm --filter @kuttab/desktop build",
     "tauri": "pnpm --filter @kuttab/desktop tauri",
     "test": "vitest run",
-    "typecheck": "pnpm -r --filter ./packages/* --filter ./apps/* typecheck",
+    "typecheck": "pnpm -r typecheck",
     "check:neutral": "node scripts/check-neutral.mjs",
     "check:packs": "vitest run packages/engine/test/packs.test.ts"
   },
