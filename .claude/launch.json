@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kuttab-desktop",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@kuttab/desktop",
+        "dev"
+      ],
+      "port": 1420
+    },
+    {
+      "name": "kuttab-desktop-csp",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@kuttab/desktop",
+        "exec",
+        "vite",
+        "preview"
+      ],
+      "env": {
+        "KUTTAB_CSP": "1"
+      },
+      "port": 1430
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "format": "kuttab",
+  "version": 1,
+  "id": "critical-thinking.en",
+  "title": "Critical thinking",
+  "description": "Weigh claims before you believe them: separate claims from evidence, spot common fallacies, judge sources, and tell correlation from cause.",
+  "lang": "en",
+  "author": "Kuttab contributors",
+  "license": "CC-BY-4.0",
+  "objectives": [
+    { "id": "claims-evidence", "title": "Claims and evidence", "summary": "Tell what is being claimed from what supports it.", "prereqs": [] },
+    { "id": "fallacies", "title": "Common fallacies", "summary": "Recognise arguments that feel convincing but do not hold up.", "prereqs": ["claims-evidence"] },
+    { "id": "sources", "title": "Judging sources", "summary": "Ask who is speaking, how they know, and what they gain.", "prereqs": ["claims-evidence"] },
+    { "id": "correlation-cause", "title": "Correlation and cause", "summary": "Explain why two things moving together does not prove one causes the other.", "prereqs": ["fallacies", "sources"] }
+  ],
+  "lessons": [
+    {
+      "objectiveId": "claims-evidence",
+      "title": "Claims and evidence",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A **claim** is a statement someone wants you to accept as true. **Evidence** is what is offered to support it: data, observations, examples, or expert testimony.\n\nBefore deciding whether you agree, take the argument apart:\n\n1. What exactly is the claim? Restate it in your own words.\n2. What evidence is given? Is any given at all?\n3. Does the evidence actually support *this* claim, or a weaker or different one?\n\nStrong claims need strong evidence. \"This drink cured my cold\" is one anecdote; it cannot show that the drink cures colds in general." },
+        { "type": "example", "markdown": "> \"Our app makes students smarter: users' grades went up 12% this year.\"\n\n- **Claim:** the app *causes* students to become smarter.\n- **Evidence:** users' grades rose 12%.\n- **Gap:** grades are not the same as \"smarter\", and we don't know how non-users' grades changed over the same year. Maybe everyone's grades rose." },
+        { "type": "check", "id": "ct-identify-evidence", "question": "\"Cycling to work is better for you; a 2017 study of 260,000 commuters found lower heart-disease rates among cyclists.\" What is the evidence?", "choices": ["Cycling to work is better for you", "The study of 260,000 commuters", "Heart disease is dangerous", "There is no evidence"], "answer": 1, "explanation": "The study is what is offered in support. The first sentence is the claim." },
+        { "type": "check", "id": "ct-anecdote", "question": "Why is \"my grandfather smoked and lived to 95\" weak evidence that smoking is safe?", "choices": ["Grandfathers are unreliable", "One case can't show what usually happens", "95 is not very old", "It is strong evidence"], "answer": 1, "explanation": "A single example, especially a memorable exception, says little about the typical outcome across many people." },
+        { "type": "reflect", "id": "ct-reflect-claim", "prompt": "Find a claim you saw recently (an advert, a headline, a post). Write the claim in one sentence, list the evidence it offered, and say whether that evidence is enough and why.", "rubric": "A strong answer: (1) states a specific claim in one clear sentence; (2) names the evidence that was actually offered, or notes that none was; (3) judges whether the evidence supports the claim, pointing to at least one concrete gap such as an anecdote, missing comparison, vague wording, or a claim stronger than the evidence. Do not judge which claim the learner chose." },
+        { "type": "recap", "markdown": "- Separate the **claim** from the **evidence**.\n- Check that the evidence supports *this* claim, not a weaker one.\n- One example is not a pattern." }
+      ]
+    },
+    {
+      "objectiveId": "fallacies",
+      "title": "Common fallacies",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A **fallacy** is a pattern of reasoning that seems persuasive but does not actually support its conclusion. A few you will meet often:\n\n- **Ad hominem:** attacking the person instead of their argument. *\"You can't trust her view on taxes, she's never run a business.\"*\n- **Straw man:** replacing someone's argument with a weaker version and knocking that down.\n- **False dilemma:** offering two options when more exist. *\"Either we ban cars or the city chokes.\"*\n- **Appeal to popularity:** *\"Millions of people use it, so it must work.\"*\n- **Slippery slope:** claiming one step must lead to an extreme outcome, without showing why.\n\nNaming a fallacy is not the end of the discussion. The conclusion might still be true; this argument just doesn't show it." },
+        { "type": "example", "markdown": "> A: \"We should add more bike lanes downtown.\"\n> B: \"So you want to ban everyone from driving?\"\n\nB answers a claim A never made. That is a **straw man**. A fair reply would address bike lanes themselves: cost, safety, or traffic effects." },
+        { "type": "check", "id": "ct-false-dilemma", "question": "\"You're either with us or against us.\" Which fallacy is this most likely to be?", "choices": ["Ad hominem", "False dilemma", "Appeal to popularity", "Slippery slope"], "answer": 1, "explanation": "It presents only two options, ignoring neutral or partly-agreeing positions." },
+        { "type": "check", "id": "ct-ad-hominem", "question": "\"His argument for the new law is wrong; he was arrested once in college.\" What is the problem?", "choices": ["It attacks the person, not the argument", "It offers too many options", "It relies on popularity", "Nothing, it's a fair point"], "answer": 0, "explanation": "The arrest says nothing about whether the argument for the law is sound. That is ad hominem." },
+        { "type": "reflect", "id": "ct-reflect-fallacy", "prompt": "Write a short argument (2–3 sentences) that contains one of the fallacies above. Then name the fallacy and rewrite the argument so it no longer relies on it.", "rubric": "A strong answer: (1) gives an argument that genuinely contains the named fallacy; (2) names it correctly; (3) rewrites the argument so it supports its conclusion with relevant reasons or evidence instead of the fallacy. A rewrite that only softens the wording but keeps the same flaw is incomplete." },
+        { "type": "recap", "markdown": "- Ad hominem, straw man, false dilemma, appeal to popularity, slippery slope.\n- A fallacy means the *argument* fails, not that the conclusion is false.\n- Respond to the strongest version of the other side's argument." }
+      ]
+    },
+    {
+      "objectiveId": "sources",
+      "title": "Judging sources",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "When you can't check a claim yourself, you rely on a **source**. Three questions help:\n\n1. **Who is speaking, and how would they know?** A climatologist on climate data is in a different position from a celebrity on the same topic.\n2. **What do they gain?** A company reviewing its own product has an incentive to be positive. Interest does not make a source wrong, but it calls for more checking.\n3. **Can I confirm it elsewhere?** Look for independent sources that reach the same conclusion. Read *across* sites, not just deeper into one: what do others say about this source?\n\nAlso check the date, and whether the source links to its own evidence." },
+        { "type": "example", "markdown": "A website says a supplement \"boosts memory by 40%\". Reading laterally, you find the site is run by the supplement's maker, the cited study had 20 participants and was funded by the company, and no independent study has repeated the result. Each finding lowers your confidence." },
+        { "type": "check", "id": "ct-lateral", "question": "You find an unfamiliar news site making a surprising claim. What is the most useful first step?", "choices": ["Read its About page carefully", "Search what other sources say about the site and the claim", "Check whether the site looks professional", "Share it and ask friends"], "answer": 1, "explanation": "Independent sources tell you more than a site's description of itself, and professional design is easy to fake." },
+        { "type": "check", "id": "ct-incentive", "question": "A study finding that sugar is harmless was funded by a sugar company. What follows?", "choices": ["The study is certainly false", "The funding is a reason to look for independent confirmation", "Funding never matters", "Only the sample size matters"], "answer": 1, "explanation": "A conflict of interest doesn't prove a result wrong, but it is a reason for extra scrutiny and for checking independent research." },
+        { "type": "reflect", "id": "ct-reflect-source", "prompt": "Pick a source you use for news or advice. Answer the three questions for it: who is speaking and how they would know, what they might gain, and how you could confirm what they say elsewhere.", "rubric": "A strong answer addresses all three questions about one specific source: (1) identifies who produces it and their expertise or access; (2) names a plausible incentive or interest, or explains why there is little; (3) gives a concrete way to cross-check, such as an independent outlet, primary data, or fact-checkers. Do not judge the learner's choice of source." },
+        { "type": "recap", "markdown": "- Ask: who, how do they know, what do they gain?\n- Read laterally: check what others say about a source.\n- An interest calls for checking; it doesn't prove error." }
+      ]
+    },
+    {
+      "objectiveId": "correlation-cause",
+      "title": "Correlation and cause",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "Two things are **correlated** when they tend to move together. That alone does not show that one **causes** the other. Before concluding A causes B, consider:\n\n- **A third factor (confounder):** ice-cream sales and drownings both rise in summer. Hot weather drives both.\n- **Reverse cause:** people who feel ill may visit doctors more; doctors don't make them ill.\n- **Chance:** with enough data, some unrelated series will line up by coincidence.\n\nThe strongest way to test cause is a **controlled experiment**: randomly split people into groups, change one thing for one group, and compare. Randomising spreads hidden factors evenly across the groups." },
+        { "type": "example", "markdown": "> \"Children who eat breakfast do better at school, so breakfast improves grades.\"\n\nPossible confounder: families with more time and money may both serve breakfast and support homework. To test cause, a study could randomly provide breakfast to some classes and not others, then compare grades." },
+        { "type": "check", "id": "ct-confounder", "question": "Towns with more firefighters have more fire damage. What is the most likely explanation?", "choices": ["Firefighters cause fires", "Bigger towns have both more firefighters and more fires", "It is pure coincidence", "Fire damage attracts firefighters to move there"], "answer": 1, "explanation": "Town size is a confounder that drives both numbers." },
+        { "type": "check", "id": "ct-experiment", "question": "Why do good experiments assign people to groups at random?", "choices": ["To make the study faster", "So hidden factors are spread evenly between groups", "So the researchers can pick the best participants", "Randomness has no purpose"], "answer": 1, "explanation": "Random assignment makes the groups alike on average in everything except the change being tested." },
+        { "type": "reflect", "id": "ct-reflect-cause", "prompt": "\"People who own pets live longer, so getting a pet will make you live longer.\" Give at least two other explanations for the correlation, and describe a study that could test whether pets actually cause longer life.", "rubric": "A strong answer: (1) offers at least two distinct alternative explanations, such as a confounder (e.g. healthier or wealthier people are more able to keep pets), reverse cause (healthy people can care for pets), or chance; (2) describes a study design that addresses them, ideally random assignment of pets or at minimum comparing similar groups and controlling for health and income; (3) explains briefly why the design helps." },
+        { "type": "recap", "markdown": "- Correlation is not cause.\n- Check for a third factor, reverse cause, and chance.\n- Randomised experiments are the strongest test of cause." }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "critical-thinking-reference",
+      "title": "Critical thinking reference card",
+      "markdown": "# Critical thinking reference card\n\n## Claims and evidence\nA claim is a statement offered as true. Evidence is what supports it: data, observations, examples, expert testimony. Check that the evidence supports this specific claim. A single anecdote cannot establish a general pattern. Extraordinary claims need strong evidence.\n\n## Common fallacies\n- Ad hominem: attacking the person rather than the argument.\n- Straw man: refuting a distorted, weaker version of an argument.\n- False dilemma: presenting two options when more exist.\n- Appeal to popularity: treating wide belief as proof.\n- Slippery slope: asserting a chain of consequences without support.\nA fallacious argument does not make its conclusion false; it only fails to support it.\n\n## Judging sources\nAsk who is speaking and how they would know, what they gain, and whether independent sources confirm it. Lateral reading means leaving the page to see what others say about the source. Check dates and whether the source cites its own evidence. A conflict of interest calls for scrutiny but does not prove a claim false.\n\n## Correlation and cause\nCorrelation means two variables move together. Alternative explanations: a confounding third factor, reverse causation, or chance. Randomised controlled experiments are the strongest test of causation because random assignment balances hidden factors across groups."
+    }
+  ]
+}

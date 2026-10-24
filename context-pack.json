@@ -1,0 +1,18 @@
+{
+  "pack": "context-pack",
+  "pack_version": "2.0.0",
+  "adopted_at": "2026-10-17",
+  "components": [],
+  "modules": [],
+  "profile": "shared-tree",
+  "lite": true,
+  "dropped_rules": [
+    "02",
+    "05",
+    "07",
+    "09",
+    "10",
+    "13",
+    "14"
+  ]
+}

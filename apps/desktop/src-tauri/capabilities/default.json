@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window: core, opener, and HTTP to any provider the learner configures (cloud or local)",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    {
+      "identifier": "http:default",
+      "allow": [{ "url": "https://*/*" }, { "url": "http://*/*" }, { "url": "http://*:*/*" }, { "url": "https://*:*/*" }]
+    }
+  ]
+}

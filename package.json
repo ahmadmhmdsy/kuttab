@@ -1,0 +1,21 @@
+{
+  "name": "kuttab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "pnpm --filter @kuttab/desktop dev",
+    "build": "pnpm --filter @kuttab/desktop build",
+    "tauri": "pnpm --filter @kuttab/desktop tauri",
+    "test": "vitest run",
+    "typecheck": "pnpm -r --filter ./packages/* --filter ./apps/* typecheck",
+    "check:neutral": "node scripts/check-neutral.mjs",
+    "check:packs": "vitest run packages/engine/test/packs.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

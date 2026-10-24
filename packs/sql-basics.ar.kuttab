@@ -1,0 +1,113 @@
+{
+  "format": "kuttab",
+  "version": 1,
+  "id": "sql-basics.ar",
+  "title": "أساسيات SQL",
+  "description": "اسأل جدولًا صغيرًا من الكتب: اختر الأعمدة، وصفِّ الصفوف، ورتّبها، واحسب عددها. التمارين تعمل في قاعدة بيانات SQLite حقيقية داخل التطبيق.",
+  "lang": "ar",
+  "author": "مساهمو كُتّاب",
+  "license": "CC-BY-4.0",
+  "objectives": [
+    { "id": "select-columns", "title": "اختيار الأعمدة بـ SELECT", "summary": "اقرأ أعمدة من جدول باستخدام SELECT … FROM.", "prereqs": [], "lab": "sql" },
+    { "id": "filter-where", "title": "تصفية الصفوف بـ WHERE", "summary": "أبقِ الصفوف التي تحقق شرطًا فقط.", "prereqs": ["select-columns"], "lab": "sql" },
+    { "id": "sort-limit", "title": "الترتيب والتحديد", "summary": "رتّب النتائج بـ ORDER BY واكتفِ بأول الصفوف بـ LIMIT.", "prereqs": ["filter-where"], "lab": "sql" },
+    { "id": "group-count", "title": "العدّ حسب المجموعات", "summary": "لخّص الصفوف لكل مجموعة بـ GROUP BY و COUNT.", "prereqs": ["sort-limit"], "lab": "sql" }
+  ],
+  "lessons": [
+    {
+      "objectiveId": "select-columns",
+      "title": "اختيار الأعمدة بـ SELECT",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "**الجدول** يخزّن البيانات في صفوف وأعمدة. جدولنا اسمه `books`، وكل صف فيه كتاب واحد، وأعمدته هي `id` و`title` (العنوان) و`author` (المؤلف) و`year` (سنة النشر) و`pages` (عدد الصفحات) و`genre` (النوع).\n\nلقراءة البيانات نكتب **استعلامًا**. أبسط استعلام يذكر الأعمدة المطلوبة والجدول الذي تأتي منه:\n\n```sql\nSELECT title, author FROM books;\n```\n\nتعني `SELECT *` «كل الأعمدة». هي مفيدة لنظرة سريعة، لكن تسمية الأعمدة تجعل قصدك أوضح." },
+        { "type": "example", "markdown": "هذا الاستعلام يعرض عنوان كل كتاب وسنة نشره. جرّب تعديلاته في ساحة التجربة.", "code": "SELECT title, year FROM books;", "language": "sql" },
+        { "type": "check", "id": "sql-select-star", "question": "ماذا يُرجع الاستعلام `SELECT * FROM books;`؟", "choices": ["العمود الأول فقط", "كل الأعمدة لكل الصفوف", "الصف الذي رقمه 1 فقط", "عدد الصفوف"], "answer": 1, "explanation": "الرمز `*` يعني كل الأعمدة، ومن دون شرط تحصل على كل الصفوف." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-select-title-author",
+          "language": "sql",
+          "prompt": "اعرض **العنوان** (`title`) و**المؤلف** (`author`) لكل كتاب.",
+          "starter": "SELECT ",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'اللص والكلاب','نجيب محفوظ',1961,180,'رواية'),(2,'الأيام','طه حسين',1929,300,'سيرة'),(3,'موسم الهجرة إلى الشمال','الطيب صالح',1966,170,'رواية'),(4,'زقاق المدق','نجيب محفوظ',1947,320,'رواية'),(5,'رجال في الشمس','غسان كنفاني',1963,110,'رواية'),(6,'المقدمة','ابن خلدون',1377,600,'تاريخ');",
+          "solution": "SELECT title, author FROM books;",
+          "wrong": ["SELECT title FROM books;", "SELECT * FROM books;", "SELECT title, author FROM books WHERE id = 1;"],
+          "check": { "kind": "result" },
+          "hints": ["اكتب اسمي عمودين بعد SELECT تفصل بينهما فاصلة.", "اسم الجدول books."]
+        } },
+        { "type": "recap", "markdown": "- `SELECT الأعمدة FROM الجدول;` يقرأ البيانات.\n- افصل بين أسماء الأعمدة بفواصل.\n- `*` تعني كل الأعمدة." }
+      ]
+    },
+    {
+      "objectiveId": "filter-where",
+      "title": "تصفية الصفوف بـ WHERE",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "معظم الأسئلة تتعلق ببعض الصفوف لا بكلها. تُبقي `WHERE` الصفوف التي يتحقق فيها الشرط فقط:\n\n```sql\nSELECT title FROM books WHERE year < 1950;\n```\n\nعوامل المقارنة: `=` و`<>` (لا يساوي) و`<` و`<=` و`>` و`>=`. النصوص توضع بين علامتي اقتباس مفردتين، والأرقام بلا علامات. اجمع الشروط بـ `AND` و`OR`." },
+        { "type": "example", "markdown": "الروايات المنشورة بعد عام 1950:", "code": "SELECT title, year FROM books\nWHERE year > 1950 AND genre = 'رواية';", "language": "sql" },
+        { "type": "check", "id": "sql-where-boundary", "question": "كتاب عدد صفحاته 300 بالضبط. هل يُبقيه الشرط `WHERE pages > 300`؟", "choices": ["نعم", "لا"], "answer": 1, "explanation": "العامل `>` صارم. استخدم `>=` إن أردت أن تشمل 300 نفسها." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-where-long-books",
+          "language": "sql",
+          "prompt": "اعرض **عنوان** كل كتاب عدد صفحاته **أكثر من 300**.",
+          "starter": "SELECT title FROM books\nWHERE ",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'اللص والكلاب','نجيب محفوظ',1961,180,'رواية'),(2,'الأيام','طه حسين',1929,300,'سيرة'),(3,'موسم الهجرة إلى الشمال','الطيب صالح',1966,170,'رواية'),(4,'زقاق المدق','نجيب محفوظ',1947,320,'رواية'),(5,'رجال في الشمس','غسان كنفاني',1963,110,'رواية'),(6,'المقدمة','ابن خلدون',1377,600,'تاريخ');",
+          "solution": "SELECT title FROM books WHERE pages > 300;",
+          "wrong": ["SELECT title FROM books;", "SELECT title FROM books WHERE pages >= 300;", "SELECT title FROM books WHERE pages < 300;"],
+          "check": { "kind": "result" },
+          "hints": ["العمود اسمه pages.", "«أكثر من» صارمة: الرقم 300 نفسه لا يُحسب."]
+        } },
+        { "type": "recap", "markdown": "- `WHERE الشرط` تُبقي الصفوف المطابقة.\n- النصوص بين علامتي اقتباس مفردتين، والأرقام بلا علامات.\n- `>` تستثني الحدّ، و`>=` تشمله." }
+      ]
+    },
+    {
+      "objectiveId": "sort-limit",
+      "title": "الترتيب والتحديد",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "من دون `ORDER BY` قد تُرجع قاعدة البيانات الصفوف بأي ترتيب. للترتيب أضف `ORDER BY العمود`، وأضف `DESC` ليكون الأكبر أولًا (الافتراضي `ASC`، أي الأصغر أولًا).\n\nتُبقي `LIMIT n` أول *n* صفوف من النتيجة المرتبة، وبها نجيب عن أسئلة «أكبر ثلاثة».\n\nترتيب العبارات مهم: `SELECT … FROM … WHERE … ORDER BY … LIMIT …`." },
+        { "type": "example", "markdown": "أقدم كتابين:", "code": "SELECT title, year FROM books\nORDER BY year\nLIMIT 2;", "language": "sql" },
+        { "type": "check", "id": "sql-order-desc", "question": "أيّ عبارة تجعل أحدث الكتب أولًا؟", "choices": ["ORDER BY year", "ORDER BY year DESC", "LIMIT year", "WHERE year DESC"], "answer": 1, "explanation": "`DESC` ترتّب من الأكبر إلى الأصغر، فتأتي السنوات الأحدث أولًا." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-top3-longest",
+          "language": "sql",
+          "prompt": "اعرض **عناوين أطول 3 كتب**، الأطول أولًا.",
+          "starter": "SELECT title FROM books\n",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'اللص والكلاب','نجيب محفوظ',1961,180,'رواية'),(2,'الأيام','طه حسين',1929,300,'سيرة'),(3,'موسم الهجرة إلى الشمال','الطيب صالح',1966,170,'رواية'),(4,'زقاق المدق','نجيب محفوظ',1947,320,'رواية'),(5,'رجال في الشمس','غسان كنفاني',1963,110,'رواية'),(6,'المقدمة','ابن خلدون',1377,600,'تاريخ');",
+          "solution": "SELECT title FROM books ORDER BY pages DESC LIMIT 3;",
+          "wrong": ["SELECT title FROM books ORDER BY pages LIMIT 3;", "SELECT title FROM books ORDER BY pages DESC;", "SELECT title FROM books LIMIT 3;"],
+          "check": { "kind": "result", "ordered": true },
+          "hints": ["رتّب حسب عدد الصفحات، الأكبر أولًا.", "ثم اكتفِ بثلاثة صفوف."]
+        } },
+        { "type": "recap", "markdown": "- `ORDER BY العمود` ترتيب تصاعدي، وأضف `DESC` للتنازلي.\n- `LIMIT n` تُبقي أول *n* صفوف.\n- ترتيب العبارات: SELECT ثم FROM ثم WHERE ثم ORDER BY ثم LIMIT." }
+      ]
+    },
+    {
+      "objectiveId": "group-count",
+      "title": "العدّ حسب المجموعات",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "تعدّ `COUNT(*)` الصفوف. وحدها تعطي رقمًا واحدًا للجدول كله:\n\n```sql\nSELECT COUNT(*) FROM books;\n```\n\nتقسّم `GROUP BY` الصفوف إلى مجموعات تشترك في قيمة، ثم تعدّ `COUNT(*)` كل مجموعة على حدة. كل عمود في `SELECT` يجب أن يكون في `GROUP BY` أو داخل دالة تجميع مثل `COUNT` و`SUM` و`AVG` و`MIN` و`MAX`." },
+        { "type": "example", "markdown": "عدد كتب كل مؤلف ومجموع صفحاتها:", "code": "SELECT author, COUNT(*) AS books, SUM(pages) AS total_pages\nFROM books\nGROUP BY author;", "language": "sql" },
+        { "type": "check", "id": "sql-group-rows", "question": "في الجدول 3 أنواع. كم صفًّا يُرجع `SELECT genre, COUNT(*) FROM books GROUP BY genre;`؟", "choices": ["1", "3", "6", "يعتمد على عدد الصفحات"], "answer": 1, "explanation": "صف واحد لكل مجموعة، وهناك 3 أنواع مختلفة." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-count-per-genre",
+          "language": "sql",
+          "prompt": "لكل **نوع** (`genre`) اعرض النوع و**عدد الكتب** فيه.",
+          "starter": "SELECT genre, \nFROM books\n",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'اللص والكلاب','نجيب محفوظ',1961,180,'رواية'),(2,'الأيام','طه حسين',1929,300,'سيرة'),(3,'موسم الهجرة إلى الشمال','الطيب صالح',1966,170,'رواية'),(4,'زقاق المدق','نجيب محفوظ',1947,320,'رواية'),(5,'رجال في الشمس','غسان كنفاني',1963,110,'رواية'),(6,'المقدمة','ابن خلدون',1377,600,'تاريخ');",
+          "solution": "SELECT genre, COUNT(*) FROM books GROUP BY genre;",
+          "wrong": ["SELECT COUNT(*) FROM books;", "SELECT genre, COUNT(*) FROM books GROUP BY author;", "SELECT DISTINCT genre FROM books;"],
+          "check": { "kind": "result" },
+          "hints": ["COUNT(*) تعدّ الصفوف.", "جمّع الصفوف حسب genre."]
+        } },
+        { "type": "recap", "markdown": "- `COUNT(*)` تعدّ الصفوف.\n- `GROUP BY العمود` تعطي صفًّا واحدًا لكل قيمة مختلفة.\n- الأعمدة غير المجمّعة في SELECT يجب أن تظهر في GROUP BY." }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sql-reference",
+      "title": "بطاقة مرجعية لأساسيات SQL",
+      "markdown": "# بطاقة مرجعية لأساسيات SQL\n\n## SELECT\n`SELECT col1, col2 FROM table;` يقرأ الأعمدة المذكورة. `SELECT *` يقرأ كل الأعمدة.\n\n## WHERE\n`WHERE الشرط` تُبقي الصفوف التي يتحقق فيها الشرط. العوامل: `=` و`<>` و`<` و`<=` و`>` و`>=`. اجمع الشروط بـ `AND` و`OR` و`NOT`. النصوص بين علامتي اقتباس مفردتين.\n\n## ORDER BY و LIMIT\n`ORDER BY col` ترتيب تصاعدي، و`ORDER BY col DESC` تنازلي. من دون ORDER BY لا يُضمن ترتيب الصفوف. `LIMIT n` تُبقي أول n صفوف.\n\n## GROUP BY ودوال التجميع\nدوال التجميع: `COUNT(*)` و`SUM(col)` و`AVG(col)` و`MIN(col)` و`MAX(col)`. تُرجع `GROUP BY col` صفًّا واحدًا لكل قيمة مختلفة في العمود. الأعمدة غير المجمّعة في SELECT يجب أن تظهر في GROUP BY.\n\n## ترتيب العبارات\nSELECT ثم FROM ثم WHERE ثم GROUP BY ثم ORDER BY ثم LIMIT.\n\n## بيانات التمرين\nجدول `books` في هذه الدورة بيانات للتمرين. أعداد الصفحات تقريبية للتوضيح ولا تطابق طبعة بعينها."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+:root { font-family: system-ui, sans-serif; font-size: 14px; color: #111; background: #fafafa; }
+.container { padding: 16px; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+td, th { border: 1px solid #ccc; padding: 4px 6px; text-align: start; vertical-align: top; }
+input { width: 100%; box-sizing: border-box; }
+input[type=checkbox] { width: auto; }
+pre.live { background: #fff; border: 1px solid #ccc; padding: 8px; min-height: 3em; white-space: pre-wrap; }
+tr.pass td:nth-child(3) { color: #0a7d2c; } tr.fail td:nth-child(3) { color: #b00020; } tr.skipped td:nth-child(3) { color: #8a6d00; }
+code { word-break: break-all; }

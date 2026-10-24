@@ -1,0 +1,22 @@
+{
+  "name": "@kuttab/labs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts",
+    "./node": "./src/node.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "pyodide": "^314.0.7",
+    "sql.js": "^1.15.0"
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.11"
+  }
+}

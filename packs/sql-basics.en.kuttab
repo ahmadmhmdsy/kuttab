@@ -1,0 +1,113 @@
+{
+  "format": "kuttab",
+  "version": 1,
+  "id": "sql-basics.en",
+  "title": "SQL basics",
+  "description": "Ask questions of a small table of books: choose columns, filter rows, sort, and count. Runs in a real SQLite database inside the app.",
+  "lang": "en",
+  "author": "Kuttab contributors",
+  "license": "CC-BY-4.0",
+  "objectives": [
+    { "id": "select-columns", "title": "Choose columns with SELECT", "summary": "Read columns from a table with SELECT … FROM.", "prereqs": [], "lab": "sql" },
+    { "id": "filter-where", "title": "Filter rows with WHERE", "summary": "Keep only the rows that match a condition.", "prereqs": ["select-columns"], "lab": "sql" },
+    { "id": "sort-limit", "title": "Sort and limit", "summary": "Order results with ORDER BY and keep the top rows with LIMIT.", "prereqs": ["filter-where"], "lab": "sql" },
+    { "id": "group-count", "title": "Count by group", "summary": "Summarise rows per group with GROUP BY and COUNT.", "prereqs": ["sort-limit"], "lab": "sql" }
+  ],
+  "lessons": [
+    {
+      "objectiveId": "select-columns",
+      "title": "Choose columns with SELECT",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A **table** stores data in rows and columns. Our table is called `books`. Each row is one book, and the columns are `id`, `title`, `author`, `year`, `pages` and `genre`.\n\nTo read data you write a **query**. The simplest one names the columns you want and the table they come from:\n\n```sql\nSELECT title, author FROM books;\n```\n\n`SELECT *` means \"every column\". It is handy for a quick look, but naming columns makes your intent clear." },
+        { "type": "example", "markdown": "This query lists every book's title and the year it came out. Press **Run** in the playground to try your own variations.", "code": "SELECT title, year FROM books;", "language": "sql" },
+        { "type": "check", "id": "sql-select-star", "question": "What does `SELECT * FROM books;` return?", "choices": ["Only the first column", "Every column of every row", "Only the row with id 1", "The number of rows"], "answer": 1, "explanation": "`*` stands for all columns, and with no filter you get every row." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-select-title-author",
+          "language": "sql",
+          "prompt": "List the **title** and **author** of every book.",
+          "starter": "SELECT ",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'The Hobbit','Tolkien',1937,300,'fantasy'),(2,'Dune','Herbert',1965,412,'scifi'),(3,'Emma','Austen',1815,474,'classic'),(4,'Neuromancer','Gibson',1984,271,'scifi'),(5,'Persuasion','Austen',1817,249,'classic'),(6,'The Silmarillion','Tolkien',1977,365,'fantasy'),(7,'Foundation','Asimov',1951,255,'scifi');",
+          "solution": "SELECT title, author FROM books;",
+          "wrong": ["SELECT title FROM books;", "SELECT * FROM books;", "SELECT title, author FROM books WHERE id = 1;"],
+          "check": { "kind": "result" },
+          "hints": ["Name two columns after SELECT, separated by a comma.", "The table is called books."]
+        } },
+        { "type": "recap", "markdown": "- `SELECT columns FROM table;` reads data.\n- Separate column names with commas.\n- `*` means every column." }
+      ]
+    },
+    {
+      "objectiveId": "filter-where",
+      "title": "Filter rows with WHERE",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "Most questions are about *some* rows, not all of them. `WHERE` keeps only the rows where a condition is true:\n\n```sql\nSELECT title FROM books WHERE author = 'Austen';\n```\n\nComparisons you can use: `=`, `<>` (not equal), `<`, `<=`, `>`, `>=`. Text goes in single quotes; numbers do not. Combine conditions with `AND` and `OR`." },
+        { "type": "example", "markdown": "Books published after 1950 that are science fiction:", "code": "SELECT title, year FROM books\nWHERE year > 1950 AND genre = 'scifi';", "language": "sql" },
+        { "type": "check", "id": "sql-where-boundary", "question": "A book has exactly 300 pages. Does `WHERE pages > 300` keep it?", "choices": ["Yes", "No"], "answer": 1, "explanation": "`>` is strict. Use `>=` to include 300 itself." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-where-long-books",
+          "language": "sql",
+          "prompt": "List the **title** of every book with **more than 300 pages**.",
+          "starter": "SELECT title FROM books\nWHERE ",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'The Hobbit','Tolkien',1937,300,'fantasy'),(2,'Dune','Herbert',1965,412,'scifi'),(3,'Emma','Austen',1815,474,'classic'),(4,'Neuromancer','Gibson',1984,271,'scifi'),(5,'Persuasion','Austen',1817,249,'classic'),(6,'The Silmarillion','Tolkien',1977,365,'fantasy'),(7,'Foundation','Asimov',1951,255,'scifi');",
+          "solution": "SELECT title FROM books WHERE pages > 300;",
+          "wrong": ["SELECT title FROM books;", "SELECT title FROM books WHERE pages >= 300;", "SELECT title FROM books WHERE pages < 300;"],
+          "check": { "kind": "result" },
+          "hints": ["The column is pages.", "\"More than\" is strict: 300 itself does not count."]
+        } },
+        { "type": "recap", "markdown": "- `WHERE condition` keeps matching rows.\n- Text in single quotes, numbers without.\n- `>` excludes the boundary, `>=` includes it." }
+      ]
+    },
+    {
+      "objectiveId": "sort-limit",
+      "title": "Sort and limit",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "Without `ORDER BY`, a database may return rows in any order. To sort, add `ORDER BY column`. Add `DESC` for largest first (the default is `ASC`, smallest first).\n\n`LIMIT n` keeps only the first *n* rows of the sorted result, which is how you answer \"top 3\" questions.\n\nThe order of clauses matters: `SELECT … FROM … WHERE … ORDER BY … LIMIT …`." },
+        { "type": "example", "markdown": "The two oldest books:", "code": "SELECT title, year FROM books\nORDER BY year\nLIMIT 2;", "language": "sql" },
+        { "type": "check", "id": "sql-order-desc", "question": "Which clause sorts the newest books first?", "choices": ["ORDER BY year", "ORDER BY year DESC", "LIMIT year", "WHERE year DESC"], "answer": 1, "explanation": "`DESC` sorts from largest to smallest, so the latest years come first." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-top3-longest",
+          "language": "sql",
+          "prompt": "Show the **title** of the **3 longest** books, longest first.",
+          "starter": "SELECT title FROM books\n",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'The Hobbit','Tolkien',1937,300,'fantasy'),(2,'Dune','Herbert',1965,412,'scifi'),(3,'Emma','Austen',1815,474,'classic'),(4,'Neuromancer','Gibson',1984,271,'scifi'),(5,'Persuasion','Austen',1817,249,'classic'),(6,'The Silmarillion','Tolkien',1977,365,'fantasy'),(7,'Foundation','Asimov',1951,255,'scifi');",
+          "solution": "SELECT title FROM books ORDER BY pages DESC LIMIT 3;",
+          "wrong": ["SELECT title FROM books ORDER BY pages LIMIT 3;", "SELECT title FROM books ORDER BY pages DESC;", "SELECT title FROM books LIMIT 3;"],
+          "check": { "kind": "result", "ordered": true },
+          "hints": ["Sort by pages, largest first.", "Then keep only 3 rows."]
+        } },
+        { "type": "recap", "markdown": "- `ORDER BY col` sorts ascending; add `DESC` for descending.\n- `LIMIT n` keeps the first *n* rows.\n- Clause order: SELECT, FROM, WHERE, ORDER BY, LIMIT." }
+      ]
+    },
+    {
+      "objectiveId": "group-count",
+      "title": "Count by group",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "`COUNT(*)` counts rows. On its own it gives one number for the whole table:\n\n```sql\nSELECT COUNT(*) FROM books;\n```\n\n`GROUP BY` splits the rows into groups that share a value, and then `COUNT(*)` counts each group separately. Every column in `SELECT` must either be in `GROUP BY` or be wrapped in an aggregate like `COUNT`, `SUM`, `AVG`, `MIN` or `MAX`." },
+        { "type": "example", "markdown": "How many books each author wrote, with the total pages:", "code": "SELECT author, COUNT(*) AS books, SUM(pages) AS total_pages\nFROM books\nGROUP BY author;", "language": "sql" },
+        { "type": "check", "id": "sql-group-rows", "question": "The table has 3 genres. How many rows does `SELECT genre, COUNT(*) FROM books GROUP BY genre;` return?", "choices": ["1", "3", "7", "It depends on the page counts"], "answer": 1, "explanation": "One row per group, and there are 3 distinct genres." },
+        { "type": "exercise", "exercise": {
+          "id": "sql-count-per-genre",
+          "language": "sql",
+          "prompt": "For each **genre**, show the genre and **how many books** it has.",
+          "starter": "SELECT genre, \nFROM books\n",
+          "setup": "CREATE TABLE books(id INTEGER PRIMARY KEY, title TEXT, author TEXT, year INT, pages INT, genre TEXT);\nINSERT INTO books VALUES (1,'The Hobbit','Tolkien',1937,300,'fantasy'),(2,'Dune','Herbert',1965,412,'scifi'),(3,'Emma','Austen',1815,474,'classic'),(4,'Neuromancer','Gibson',1984,271,'scifi'),(5,'Persuasion','Austen',1817,249,'classic'),(6,'The Silmarillion','Tolkien',1977,365,'fantasy'),(7,'Foundation','Asimov',1951,255,'scifi');",
+          "solution": "SELECT genre, COUNT(*) FROM books GROUP BY genre;",
+          "wrong": ["SELECT COUNT(*) FROM books;", "SELECT genre, COUNT(*) FROM books GROUP BY author;", "SELECT DISTINCT genre FROM books;"],
+          "check": { "kind": "result" },
+          "hints": ["COUNT(*) counts rows.", "Group the rows by genre."]
+        } },
+        { "type": "recap", "markdown": "- `COUNT(*)` counts rows.\n- `GROUP BY col` gives one result row per distinct value.\n- Non-aggregated columns in SELECT must appear in GROUP BY." }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sql-reference",
+      "title": "SQL basics reference card",
+      "markdown": "# SQL basics reference card\n\n## SELECT\n`SELECT col1, col2 FROM table;` reads the named columns. `SELECT *` reads every column.\n\n## WHERE\n`WHERE condition` keeps rows where the condition is true. Operators: `=`, `<>`, `<`, `<=`, `>`, `>=`. Combine with `AND`, `OR`, `NOT`. Text literals use single quotes.\n\n## ORDER BY and LIMIT\n`ORDER BY col` sorts ascending; `ORDER BY col DESC` sorts descending. Without ORDER BY the row order is not guaranteed. `LIMIT n` keeps the first n rows.\n\n## GROUP BY and aggregates\nAggregates: `COUNT(*)`, `SUM(col)`, `AVG(col)`, `MIN(col)`, `MAX(col)`. `GROUP BY col` returns one row per distinct value of col. Columns in SELECT that are not aggregated must appear in GROUP BY.\n\n## Clause order\nSELECT, FROM, WHERE, GROUP BY, ORDER BY, LIMIT.\n\n## The sample data\nThe `books` table in this course is sample data made for practice. Page counts are illustrative and do not match any particular edition."
+    }
+  ]
+}

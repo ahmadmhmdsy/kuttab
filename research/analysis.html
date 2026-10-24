@@ -1,0 +1,432 @@
+<title>Local AI Teacher Research</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans+Arabic:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-notebook report — sticky contents rail on wide screens, single reading column, wide tables scroll in place */
+:root{
+  --paper:#f6f7f5; --sheet:#ffffff; --ink:#1b2422; --muted:#5b6964; --rule:#d9dfdb; --grid:#e7ece9;
+  --accent:#0f6b5c; --accent-soft:#dcefe9; --flag:#b8641a; --flag-soft:#f8ead9; --closed:#3b4f8f; --closed-soft:#e3e8f6;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-ar:"IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --s-1:.8125rem; --s0:1rem; --s1:1.2rem; --s2:1.55rem; --s3:2.1rem; --s4:clamp(2.2rem,5vw,3.3rem);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#121816; --sheet:#182120; --ink:#e4ebe8; --muted:#9aaba5; --rule:#2c3936; --grid:#1d2725;
+  --accent:#4cc3a8; --accent-soft:#183a33; --flag:#e7a061; --flag-soft:#3a2a1a; --closed:#9fb1ec; --closed-soft:#232c48; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --paper:#121816; --sheet:#182120; --ink:#e4ebe8; --muted:#9aaba5; --rule:#2c3936; --grid:#1d2725;
+  --accent:#4cc3a8; --accent-soft:#183a33; --flag:#e7a061; --flag-soft:#3a2a1a; --closed:#9fb1ec; --closed-soft:#232c48; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 var(--s0)/1.62 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h2{font-size:var(--s3);font-weight:700;letter-spacing:-.01em}
+h3{font-size:var(--s1);font-weight:700;margin-block:1.6rem .5rem}
+p{margin:0 0 .9rem;max-width:68ch}
+ul,ol{margin:0 0 1rem;padding-inline-start:1.25rem;max-width:68ch}
+li{margin-block:.3rem}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--grid);padding:.08em .35em;border-radius:3px}
+.label{font:500 var(--s-1)/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.masthead{background-color:var(--sheet);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;border-bottom:1px solid var(--rule)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.masthead .wrap{padding-block:3rem 2.25rem;display:grid;gap:1rem}
+.masthead h1{font-size:var(--s4);font-weight:700;letter-spacing:-.02em;max-width:22ch}
+.masthead .lede{font-size:var(--s1);color:var(--muted);max-width:60ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:.5rem 1.25rem}
+.meta span{font:400 var(--s-1)/1.4 var(--f-mono);color:var(--muted)}
+.meta b{color:var(--ink);font-weight:500}
+
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:3rem;padding-block:2.5rem 4rem}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 1.5rem);align-self:start;display:grid;gap:.15rem}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:var(--s-1);padding:.3rem .6rem;border-inline-start:2px solid var(--rule)}
+nav.toc a:hover{color:var(--ink);border-color:var(--accent)}
+nav.toc .label{margin-block-end:.5rem;padding-inline-start:.6rem}
+main{min-width:0;display:grid;gap:3.5rem}
+section{min-width:0}
+section>header{display:grid;gap:.35rem;margin-block-end:1.25rem;padding-block-end:.75rem;border-bottom:1px solid var(--rule)}
+
+.verdicts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:1rem;margin-block:1.25rem}
+.verdict{background:var(--sheet);border:1px solid var(--rule);padding:1rem 1.1rem;display:grid;gap:.4rem;align-content:start}
+.verdict p{margin:0;font-size:.95rem}
+.verdict .label{color:var(--accent)}
+
+.tbl{overflow-x:auto;border:1px solid var(--rule);background:var(--sheet);margin-block:1rem 1.25rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem;min-width:720px}
+th,td{text-align:start;vertical-align:top;padding:.65rem .8rem;border-bottom:1px solid var(--rule)}
+th{font:500 var(--s-1)/1.3 var(--f-mono);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+td:first-child a{font-weight:600}
+.tag{display:inline-block;font:500 .72rem/1 var(--f-mono);padding:.3em .5em;border-radius:3px;white-space:nowrap}
+.t-yes{background:var(--accent-soft);color:var(--accent)}
+.t-part{background:var(--flag-soft);color:var(--flag)}
+.t-no{background:var(--grid);color:var(--muted)}
+.t-pick{background:var(--accent);color:var(--sheet)}
+
+.chart{background:var(--sheet);border:1px solid var(--rule);padding:1rem;margin-block:1rem}
+.chart svg{width:100%;height:auto;display:block;max-width:760px;margin:0 auto}
+.chart text{font-family:var(--f-body);fill:var(--ink)}
+.chart .ax{font-family:var(--f-mono);font-size:11px;fill:var(--muted);letter-spacing:.05em}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;font-size:var(--s-1);color:var(--muted);margin-top:.5rem}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:.4rem;vertical-align:-1px}
+
+.gaps{counter-reset:g;list-style:none;padding:0;display:grid;gap:.75rem;max-width:none}
+.gaps li{counter-increment:g;display:grid;grid-template-columns:2.2rem minmax(0,1fr);gap:.75rem;background:var(--sheet);border:1px solid var(--rule);padding:.9rem 1rem;margin:0}
+.gaps li::before{content:counter(g);font:700 var(--s2)/1 var(--f-display);color:var(--accent)}
+.gaps b{display:block;margin-bottom:.15rem}
+
+pre.diagram{font:400 .8rem/1.45 var(--f-mono);background:var(--sheet);border:1px solid var(--rule);padding:1rem;overflow-x:auto;color:var(--ink);margin-block:1rem}
+
+.callout{border-inline-start:3px solid var(--flag);background:var(--flag-soft);padding:.8rem 1rem;margin-block:1rem;max-width:72ch}
+.callout p:last-child{margin:0}
+
+.bidi{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1rem;margin-block:1rem}
+.bidi figure{margin:0;background:var(--sheet);border:1px solid var(--rule);padding:1rem;display:grid;gap:.6rem}
+.bidi figcaption{font:500 var(--s-1)/1.3 var(--f-mono);color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.ar{font-family:var(--f-ar);font-size:1.05rem;line-height:1.9}
+.ar pre{direction:ltr;text-align:left;unicode-bidi:isolate;font:400 .82rem/1.5 var(--f-mono);background:var(--grid);padding:.6rem .75rem;margin:.4rem 0 0;overflow-x:auto}
+
+.roadmap{display:grid;gap:0;border:1px solid var(--rule);background:var(--sheet)}
+.phase{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:1rem;padding:.9rem 1rem;border-bottom:1px solid var(--rule)}
+.phase:last-child{border-bottom:0}
+.phase .label{color:var(--accent);padding-top:.15rem}
+.phase p{margin:0}
+.phase b{font-family:var(--f-display)}
+
+.questions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:.75rem;list-style:none;padding:0;max-width:none;counter-reset:q}
+.questions li{counter-increment:q;background:var(--sheet);border:1px solid var(--rule);padding:.85rem 1rem;margin:0}
+.questions li::before{content:"Q" counter(q);font:500 var(--s-1)/1 var(--f-mono);color:var(--flag);display:block;margin-bottom:.35rem}
+
+footer{border-top:1px solid var(--rule);color:var(--muted);font-size:var(--s-1)}
+footer .wrap{padding-block:1.5rem 2.5rem}
+
+@media (max-width:860px){
+  .layout{grid-template-columns:minmax(0,1fr);gap:1.5rem}
+  nav.toc{position:static;display:flex;flex-wrap:wrap;gap:.35rem}
+  nav.toc .label{width:100%;padding:0}
+  nav.toc a{border:1px solid var(--rule);border-radius:3px}
+  td:first-child{white-space:normal}
+}
+@media (prefers-reduced-motion:no-preference){ nav.toc a{transition:color .15s,border-color .15s} }
+</style>
+
+<div class="masthead">
+  <div class="wrap">
+    <span class="label">Research report · T-1 competitive analysis</span>
+    <h1>DataCamp AI Native, its rivals, and the gap for a local AI teacher</h1>
+    <p class="lede">A teardown of DataCamp's AI-generated courses, a map of the open- and closed-source alternatives, and a recommended architecture for an open-source tutor that runs on the learner's own machine with their own model.</p>
+    <div class="meta">
+      <span>Date <b>2026-10-17</b></span>
+      <span>Scope <b>generic topics + coding labs</b></span>
+      <span>Languages <b>English · العربية</b></span>
+      <span>Constraints <b>local · bring your own key · no account · no server</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Contents">
+    <span class="label">Contents</span>
+    <a href="#summary">Summary</a>
+    <a href="#teardown">DataCamp teardown</a>
+    <a href="#landscape">Landscape</a>
+    <a href="#gaps">Gaps to own</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#arabic">Arabic and RTL</a>
+    <a href="#risks">Risks</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#questions">Open questions</a>
+  </nav>
+
+  <main>
+    <section id="summary">
+      <header><span class="label">1 · Summary</span><h2>The short version</h2></header>
+      <div class="verdicts">
+        <div class="verdict"><span class="label">What it is</span><p>AI Native comes from DataCamp's November 2025 purchase of Optima. A tutor interviews the learner, then writes every lesson and exercise live. It stays inside learning goals set by experts and answers only from an instructor's knowledge base.</p></div>
+        <div class="verdict"><span class="label">Nobody open matches it</span><p>DeepTutor and OpenMAIC are strong but built around servers: a Python backend in one case, Postgres in the other. Neither is a double-click desktop app, neither has code labs at its core, and neither is built for Arabic.</p></div>
+        <div class="verdict"><span class="label">The opening</span><p>Grounded, adaptive lessons plus runnable labs, in one local app that uses whatever model the learner brings. Add an open course-pack format and first-class Arabic support.</p></div>
+        <div class="verdict"><span class="label">Recommended build</span><p>A Tauri 2 desktop app on a web core. LLM calls go through Rust, which removes CORS problems. Keys live in the OS keychain. Python runs in Pyodide, SQL in DuckDB-wasm, search runs locally, and data is stored in SQLite.</p></div>
+      </div>
+      <div class="callout"><p><b>Main risk:</b> the quality of small local models, not the engineering. The design has to work on a 7–8B model. That means typed prompts, caching each lesson once it is generated, and letting course packs carry most of the curriculum.</p></div>
+    </section>
+
+    <section id="teardown">
+      <header><span class="label">2 · Feature teardown</span><h2>How DataCamp AI Native teaches</h2></header>
+      <p>Optima is a Dubai company founded in 2021. Its founder, Yusuf Saber, is now DataCamp's Chief AI Officer. One report puts the price near $15M; this is unverified. Business and enterprise access, with admin switches, followed in Q2 2026. Courses seen so far include Intro to AI for Work, Intro and Intermediate SQL, LLM Application Fundamentals, Prompt Engineering and a LangChain AI Engineering track.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Stage</th><th>What the learner sees</th><th>What it implies for us</th></tr></thead>
+        <tbody>
+          <tr><td>Onboarding</td><td>Questions about role, level and goals</td><td>A saved <b>learner profile</b> that goes into every prompt</td></tr>
+          <tr><td>Goal-anchored plan</td><td>Lessons tied to objectives set by experts</td><td>A fixed <b>objective graph</b>. The AI improvises inside it</td></tr>
+          <tr><td>Live lesson</td><td>Explanations and examples written for this person</td><td><b>Structured generation</b> into typed lesson blocks</td></tr>
+          <tr><td>Exercise</td><td>Write SQL or code, run it, get it checked</td><td>A sandboxed runner with deterministic tests</td></tr>
+          <tr><td>Feedback</td><td>Why the answer is right or wrong, and what's next</td><td>LLM explanation built on the test result</td></tr>
+          <tr><td>Adaptation</td><td>"Stuck? It slows down. Ahead? It speeds up."</td><td>A <b>mastery estimate</b> per objective</td></tr>
+          <tr><td>Guardrails</td><td>Answers only from the instructor knowledge base and says when unsure</td><td>Grounded search with a refusal threshold</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Worth copying</h3>
+      <ul>
+        <li><b>A fixed spine with a flexible surface.</b> Experts own the objectives and the AI owns the explanation and pacing. This is the main defense against hallucination.</li>
+        <li><b>Exercises you actually run</b>, graded by tests first and by the model second.</li>
+        <li><b>Examples drawn from the learner's field.</b> The same JOIN lesson uses marketing data for a marketer and clinical data for a nurse.</li>
+      </ul>
+      <h3>Weak points</h3>
+      <ul>
+        <li>The "1 hour = 6 hours" and "6× completion" figures are DataCamp's own. There are no independent reviews or outcome studies, and <a href="https://www.classcentral.com/report/chatgpt-gemini-ai-tutors/">Class Central</a> points to hallucination risk.</li>
+        <li>It is closed SaaS. DataCamp picks the model, data is stored in the USA, and the catalog covers data and AI topics only.</li>
+        <li>Learners cannot bring their own material or write their own courses, and there is no Arabic interface.</li>
+      </ul>
+      <p class="label">Sources: <a href="https://www.datacamp.com/blog/datacamp-has-acquired-optima">DataCamp</a> · <a href="https://www.businesswire.com/news/home/20251112410509/en">BusinessWire</a> · <a href="https://www.classcentral.com/report/datacamp-acquires-optima/">Class Central</a> · <a href="https://www.datacamp.com/learn/ai-native">AI Native</a> · <a href="https://www.datacamp.com/business/ai-native">Business</a></p>
+    </section>
+
+    <section id="landscape">
+      <header><span class="label">3 · Competitor landscape</span><h2>Who else is building AI teachers</h2></header>
+
+      <div class="chart" role="img" aria-label="Positioning map: horizontal axis from runs locally to cloud only, vertical axis from free-form chat to grounded curriculum">
+        <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
+          <rect x="60" y="20" width="680" height="350" fill="none" stroke="var(--rule)"/>
+          <line x1="400" y1="20" x2="400" y2="370" stroke="var(--rule)" stroke-dasharray="4 4"/>
+          <line x1="60" y1="195" x2="740" y2="195" stroke="var(--rule)" stroke-dasharray="4 4"/>
+          <text class="ax" x="66" y="392">RUNS LOCALLY</text>
+          <text class="ax" x="734" y="392" text-anchor="end">CLOUD SAAS ONLY</text>
+          <text class="ax" x="40" y="30" transform="rotate(-90 40 30)" text-anchor="end">GROUNDED CURRICULUM</text>
+          <text class="ax" x="40" y="370" transform="rotate(-90 40 370)">FREE-FORM CHAT</text>
+          <!-- target -->
+          <rect x="120" y="58" width="16" height="16" transform="rotate(45 128 66)" fill="var(--accent)"/>
+          <text x="148" y="71" font-size="14" font-weight="700" fill="var(--accent)">This project (target)</text>
+          <!-- closed -->
+          <g fill="var(--closed)">
+            <circle cx="470" cy="60" r="7"/><circle cx="640" cy="80" r="7"/><circle cx="600" cy="150" r="7"/>
+            <circle cx="560" cy="250" r="7"/><circle cx="660" cy="270" r="7"/><circle cx="620" cy="335" r="7"/>
+          </g>
+          <text x="482" y="64" font-size="13">DataCamp AI Native</text>
+          <text x="628" y="70" font-size="13" text-anchor="end">Khanmigo</text>
+          <text x="588" y="142" font-size="13" text-anchor="end">Boot.dev · Scrimba</text>
+          <text x="548" y="254" font-size="13" text-anchor="end">Oboe</text>
+          <text x="648" y="262" font-size="13" text-anchor="end">Learn Your Way</text>
+          <text x="608" y="339" font-size="13" text-anchor="end">ChatGPT · Gemini · Claude study modes</text>
+          <!-- open -->
+          <g fill="var(--sheet)" stroke="var(--flag)" stroke-width="2.5">
+            <circle cx="150" cy="225" r="7"/><circle cx="255" cy="215" r="7"/><circle cx="320" cy="290" r="7"/><circle cx="130" cy="330" r="7"/>
+          </g>
+          <text x="162" y="229" font-size="13">OpenEdu</text>
+          <text x="267" y="219" font-size="13">DeepTutor</text>
+          <text x="267" y="234" font-size="11" fill="var(--muted)">needs Python server</text>
+          <text x="332" y="294" font-size="13">OpenMAIC</text>
+          <text x="332" y="309" font-size="11" fill="var(--muted)">needs Postgres</text>
+          <text x="142" y="334" font-size="13">Ollama chat tutors</text>
+        </svg>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Target</span><span><i style="background:var(--closed)"></i>Closed source</span><span><i style="background:var(--sheet);border:2px solid var(--flag)"></i>Open source</span></div>
+      </div>
+      <p class="label" style="text-align:center">Positions are qualitative judgments from this research, not measurements.</p>
+
+      <h3>Closed source</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Product</th><th>What it does</th><th>Personalization</th><th>Labs</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>DataCamp AI Native</td><td>Live AI lessons inside courses set by experts</td><td>Onboarding profile, adaptive pace</td><td><span class="tag t-yes">SQL · Python</span></td><td>Data and AI topics only. B2B since Q2 2026</td></tr>
+          <tr><td><a href="https://techcrunch.com/?p=3044797">Oboe</a></td><td>A course on any topic after a diagnostic chat</td><td>Diagnostic conversation</td><td><span class="tag t-no">no</span></td><td>From the Anchor co-founders. $16M Series A led by a16z. Articles, audio, quizzes, games, flashcards. Fact-checking agents</td></tr>
+          <tr><td><a href="https://gigazine.net/gsc_news/en/20250919-google-learn-your-way">Learn Your Way</a></td><td>Textbooks rewritten for the learner's grade level and interests</td><td>Grade level and interests</td><td><span class="tag t-no">no</span></td><td>Google Labs, built on LearnLM. Backed by a <a href="https://arxiv.org/pdf/2509.13348">randomized trial</a></td></tr>
+          <tr><td>ChatGPT, Gemini, Claude study modes</td><td>Socratic modes inside general chat</td><td>Light</td><td><span class="tag t-part">via tools</span></td><td>No curriculum spine and no mastery tracking</td></tr>
+          <tr><td>Khanmigo</td><td>Socratic tutor over Khan Academy content</td><td>Course context</td><td><span class="tag t-yes">Khan exercises</span></td><td>About $4 a month. A strong pedagogy reference</td></tr>
+          <tr><td>Duolingo Max · Coursera Coach</td><td>Roleplay and "explain my answer" · Q&amp;A over course videos</td><td>Lesson context</td><td><span class="tag t-no">no</span></td><td>Narrow scope</td></tr>
+          <tr><td><a href="https://scrimba.com/articles/best-zero-to-mastery-alternatives/">Boot.dev · Scrimba · Codecademy</a></td><td>Coding courses with an AI helper</td><td>Little</td><td><span class="tag t-yes">browser coding</span></td><td>The AI helps with a fixed course. It does not write the course</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>Open source</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Project</th><th>License · size</th><th>Stack</th><th>Strengths</th><th>Local, no server?</th></tr></thead>
+        <tbody>
+          <tr><td><a href="https://github.com/HKUDS/DeepTutor">DeepTutor</a></td><td>Apache-2.0 · ~41.6k ★</td><td>FastAPI + Next.js 16</td><td>Chat, quiz, research, solve, course, Mastery Path, Book, audio. Several search engines. Three-layer memory. Many providers</td><td><span class="tag t-part">partial</span> local, but a Python server</td></tr>
+          <tr><td><a href="https://github.com/THU-MAIC/OpenMAIC">OpenMAIC</a></td><td>MIT · ~40.9k ★</td><td>Next.js 16 + PostgreSQL</td><td>Multi-agent classroom: slides with voice, quizzes, simulations, whiteboard, coding. Exports PPTX. 12 locales</td><td><span class="tag t-no">no</span> Postgres and a long-running server</td></tr>
+          <tr><td><a href="https://github.com/DYNOSuprovo/OpenEdu">OpenEdu</a></td><td>varies · several forks</td><td>Python + SQLite</td><td>A 6-level curriculum for any topic. Tuned for small models</td><td><span class="tag t-part">close</span> small, origin unclear</td></tr>
+          <tr><td><a href="https://www.arxiv.org/pdf/2602.07176">Open TutorAI</a></td><td>research</td><td>Ollama + Docker</td><td>Avatars, onboarding, views for learners, educators and parents</td><td><span class="tag t-part">research grade</span></td></tr>
+          <tr><td><a href="https://openalternative.co/alternatives/notebooklm">NotebookLM clones</a></td><td>MIT / Apache</td><td>Python servers</td><td>Open Notebook, SurfSense, KnowNote, AnythingLLM, kotaemon: Q&amp;A over your sources, podcasts, cards</td><td><span class="tag t-no">no</span> a reference for importing sources only</td></tr>
+          <tr><td><a href="https://www.sourcepulse.org/projects/1827833">Mr. Ranedeer</a></td><td>~30k ★ · discontinued</td><td>One GPT-4 prompt</td><td>Learner sets depth, style and tone. <code>/plan</code> and <code>/test</code></td><td><span class="tag t-no">prompt only</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="gaps">
+      <header><span class="label">4 · Differentiation</span><h2>Gaps nobody fills</h2></header>
+      <ol class="gaps">
+        <li><div><b>A real desktop app, zero setup, your model</b>Install, paste a key or point at Ollama, and start learning within two minutes. No Docker and no Python server.</div></li>
+        <li><div><b>Grounded adaptivity, done in the open</b>Fixed objectives come from a teacher's pack or a list the learner confirms. The AI generates the lesson surface around them.</div></li>
+        <li><div><b>Runnable labs as a core feature</b>Python, SQL and JS run inside the app and offline. Tests grade first, then the model explains why.</div></li>
+        <li><div><b>An open course-pack format</b>Something like an EPUB for adaptive courses: Markdown and YAML, friendly to git, one file to share. Teachers author, learners import, and the community grows the catalog.</div></li>
+        <li><div><b>Arabic as a first-class language</b>An RTL interface, Arabic lessons, code that stays readable inside Arabic text, and search that handles Arabic.</div></li>
+        <li><div><b>Private and honest</b>No account and no telemetry. A cost meter for paid keys. Every claim cites its source, and the tutor says when something is not in the sources.</div></li>
+      </ol>
+      <p style="margin-top:1rem">Out of scope for v1: avatars, classroom role-play between multiple agents, podcast generation and enterprise admin.</p>
+    </section>
+
+    <section id="architecture">
+      <header><span class="label">5 · Architecture</span><h2>Recommended shape</h2></header>
+      <div class="tbl"><table>
+        <thead><tr><th>Option</th><th>For</th><th>Against</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>Tauri 2</td><td>Installers of a few MB. The Rust HTTP plugin avoids CORS for every provider. Keychain, SQLite and updater plugins. Mobile targets exist</td><td>Webviews differ by OS, so all three need testing. Needs Rust, which is already installed here</td><td><span class="tag t-pick">choose</span></td></tr>
+          <tr><td>Electron</td><td>The same Chromium everywhere, so WebGPU behaves consistently</td><td>Downloads over 100 MB and heavy RAM use</td><td><span class="tag t-no">fallback</span></td></tr>
+          <tr><td>PWA only</td><td>No install, just a link</td><td>CORS and key storage limits. Storage can be evicted. Ollama needs <code>OLLAMA_ORIGINS</code></td><td><span class="tag t-part">later, same core</span></td></tr>
+        </tbody>
+      </table></div>
+
+<pre class="diagram">┌───────────────────────────────────────────────────────────────────┐
+│ UI  React + TS · Vite · i18n en/ar · RTL via CSS logical props    │
+├───────────────────────────────────────────────────────────────────┤
+│ Teaching engine (pure TS)                                         │
+│   learner profile · objective graph · lesson planner              │
+│   typed lesson generator · grader · mastery model · FSRS review   │
+├────────────────┬────────────────┬────────────────┬────────────────┤
+│ LLM gateway    │ Knowledge base │ Labs runtime   │ Storage        │
+│ AI SDK + Rust  │ PDF·MD·URL·YT  │ Pyodide worker │ SQLite (Tauri) │
+│ fetch adapter  │ → chunks →     │ DuckDB-wasm    │ IndexedDB (PWA)│
+│ cloud · Ollama │ local embeds → │ sql.js         │ packs on disk  │
+│ · WebLLM       │ hybrid search  │ iframe sandbox │                │
+├────────────────┴────────────────┴────────────────┴────────────────┤
+│ Platform adapter:  Tauri (http · keystore · fs · sql) | Browser   │
+└───────────────────────────────────────────────────────────────────┘</pre>
+      <p>The rule that keeps the PWA possible: the teaching engine never imports Tauri. Everything that depends on the platform goes through one adapter.</p>
+
+      <h3>Three kinds of model, one gateway</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Kind</th><th>Examples</th><th>How it connects</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Cloud key</td><td>OpenAI, Anthropic, Google, OpenRouter, Groq, any OpenAI-compatible URL</td><td>AI SDK providers with a custom <code>fetch</code> through <code>tauri-plugin-http</code></td><td>In the PWA, only providers that allow browser calls work. Anthropic needs the <a href="https://github.com/vercel/ai/issues/3041"><code>anthropic-dangerous-direct-browser-access</code></a> header</td></tr>
+          <tr><td>Local server</td><td>Ollama, LM Studio, llama.cpp, Jan</td><td>OpenAI-compatible localhost endpoint, or <a href="https://cdn.jsdelivr.net/npm/ai-sdk-ollama@4.0.0/README.md">ai-sdk-ollama</a></td><td>Auto-detects ports 11434, 1234 and 8080. Ollama is not installed on this PC yet</td></tr>
+          <tr><td>In-browser</td><td>WebLLM, transformers.js v4 (WebGPU)</td><td><code>@browser-ai/*</code> providers in a Web Worker</td><td>Fully offline. Models are 1–5 GB and drive E: has about 10 GB free. Good for embeddings, weak at writing whole lessons</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Model roles:</b> the learner assigns a <i>teacher</i> model for lesson writing, a <i>grader</i> model (cheaper, for short feedback) and an <i>embedder</i> (local by default). <b>Capability probe:</b> on first connect, a three-question JSON test finds out whether the model can follow schemas. Weak models get simpler templates.</p>
+
+      <h3>Teaching engine</h3>
+      <ol>
+        <li><b>Onboarding interview</b> builds a profile: goal, background, field for examples, level, language, time and style.</li>
+        <li><b>Objective graph</b> comes from a course pack, or is generated and then confirmed by the learner. Each objective has prerequisites, knowledge-base references and checks.</li>
+        <li><b>Typed lesson blocks</b> (<code>explain</code>, <code>worked_example</code>, <code>check</code>, <code>exercise</code>, <code>recap</code>) are generated with <code>generateObject</code> and validated with Zod. Each claim carries citations. Lessons are cached once generated.</li>
+        <li><b>Grading in two stages:</b> deterministic first (exact answers, Pyodide tests, comparing SQL result sets), then the LLM explains why.</li>
+        <li><b>Mastery pacing</b> per objective. Fail twice and it re-explains with a new analogy. Pass fast and it skips the worked example.</li>
+        <li><b>Spaced review</b> with FSRS via <code>ts-fsrs</code>. FSRS is the scheduler used across Anki, with FSRS-6 since Anki 25.07.</li>
+        <li><b>Guardrails:</b> in grounded mode, the tutor answers only from retrieved passages. Below a relevance threshold it says the answer is not in the sources.</li>
+      </ol>
+
+      <h3>Labs, knowledge base and storage</h3>
+      <ul>
+        <li><b>Python</b> runs in Pyodide in a worker, with a timeout and interrupt. <b>SQL</b> runs in DuckDB-wasm or sql.js and is graded by comparing result sets. <b>JS/HTML</b> runs in a sandboxed iframe. Keep DuckDB and Pyodide side by side, because the bridge between them is <a href="https://duckdb.org/2024/10/02/pyodide">still experimental</a>.</li>
+        <li><b>Ingest:</b> PDF with pdf.js, DOCX with mammoth, Markdown, URLs cleaned with Readability, and YouTube transcripts. YouTube is opt-in and fragile, so the learner can always paste a transcript instead.</li>
+        <li><b>Search:</b> multilingual local embeddings via transformers.js, so Arabic works, plus hybrid BM25 and vector search with Orama or sqlite-vec.</li>
+        <li><b>Storage:</b> SQLite on desktop, with packs and sources kept as visible files. IndexedDB or OPFS in the PWA, with a one-file backup. API keys go in the OS keychain.</li>
+      </ul>
+
+      <h3>Course pack draft</h3>
+<pre class="diagram">my-course.tpack            zip, or a plain folder
+├── pack.yaml              id, title, version, languages, license, authors, min_app
+├── objectives.yaml        id, title, prereqs[], kb_refs[], mastery checks
+├── kb/                    source material the tutor is grounded in
+├── lessons/               optional hand-written or pre-generated blocks (md)
+├── labs/&lt;id&gt;/             starter code, tests, datasets (csv · parquet · sqlite)
+├── prompts/               optional persona and style overrides
+└── i18n/ar/               optional translated titles and lessons</pre>
+      <p>Lessons are optional, so a pack can be just objectives plus sources. Lessons that get generated can be exported back into a pack, which gives teachers an authoring loop: generate, edit, publish.</p>
+
+      <h3>Suggested stack</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>Concern</th><th>Pick</th><th>Alternative</th></tr></thead>
+        <tbody>
+          <tr><td>Shell</td><td>Tauri 2</td><td>Electron</td></tr>
+          <tr><td>UI</td><td>React 19 + TypeScript + Vite</td><td>Svelte 5 · SolidJS</td></tr>
+          <tr><td>Styling</td><td>Tailwind v4 + Radix primitives</td><td>CSS modules</td></tr>
+          <tr><td>LLM</td><td>Vercel AI SDK + custom fetch adapter</td><td>Hand-rolled OpenAI-compatible client</td></tr>
+          <tr><td>Schemas</td><td>Zod</td><td>Valibot</td></tr>
+          <tr><td>Editor</td><td>CodeMirror 6</td><td>Monaco</td></tr>
+          <tr><td>Labs</td><td>Pyodide · DuckDB-wasm · sql.js</td><td>—</td></tr>
+          <tr><td>Search</td><td>transformers.js + Orama</td><td>sqlite-vec</td></tr>
+          <tr><td>Review</td><td>ts-fsrs</td><td>—</td></tr>
+          <tr><td>Tooling</td><td>pnpm · Vitest · Playwright</td><td>bun</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="arabic">
+      <header><span class="label">6 · Arabic and RTL</span><h2>Mixed-direction text, done right</h2></header>
+      <p>A lesson in Arabic about SQL mixes right-to-left prose with left-to-right code. That is the hard case, and this is how it should render:</p>
+      <div class="bidi">
+        <figure>
+          <figcaption>Arabic lesson block · dir="rtl"</figcaption>
+          <div class="ar" dir="rtl" lang="ar">
+            تُستخدم عبارة <bdi><code>JOIN</code></bdi> لدمج صفوف من جدولين بناءً على عمود مشترك. جرّب الاستعلام التالي:
+            <pre>SELECT c.name, o.total
+FROM customers c
+JOIN orders o ON o.customer_id = c.id;</pre>
+          </div>
+        </figure>
+        <figure>
+          <figcaption>Rules</figcaption>
+          <ul style="margin:0">
+            <li>Set <code>dir</code> from the UI language, and put <code>dir="auto"</code> on every generated message.</li>
+            <li>Use only CSS logical properties. Mirror icons that point a direction, but never the code editor.</li>
+            <li>Code is always LTR and isolated. Inline code gets <code>&lt;bdi&gt;</code>.</li>
+            <li>ICU plurals, because Arabic has six plural forms.</li>
+            <li>Keep technical terms in English the first time they appear, with an Arabic gloss.</li>
+          </ul>
+        </figure>
+      </div>
+    </section>
+
+    <section id="risks">
+      <header><span class="label">7 · Risks</span><h2>What could go wrong</h2></header>
+      <div class="tbl"><table>
+        <thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>Weak small models</td><td>Poor lessons</td><td>Model roles, cached lessons, packs carry the curriculum, capability probe, recommended-models list</td></tr>
+          <tr><td>Hallucination</td><td>Wrong teaching</td><td>Grounded mode with citations, a refusal threshold, deterministic grading, a local "report lesson" flag</td></tr>
+          <tr><td>Provider CORS changes</td><td>Broken PWA calls</td><td>Desktop calls go through Rust. The PWA supports a checked list of providers</td></tr>
+          <tr><td>Key leakage</td><td>Cost, security</td><td>OS keychain. Keys are never logged and never put in exports</td></tr>
+          <tr><td>Surprise bills</td><td>Lost trust</td><td>A cost meter per session and an optional budget cap</td></tr>
+          <tr><td>YouTube transcripts</td><td>Breakage, terms of service</td><td>Opt-in, with a paste fallback</td></tr>
+          <tr><td>WebGPU varies by webview</td><td>In-browser models fail</td><td>Feature detection and a fallback to Ollama or cloud</td></tr>
+          <tr><td>Disk space (~10 GB on E:)</td><td>Model downloads fail</td><td>Show the size first and let the learner choose the cache folder</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="roadmap">
+      <header><span class="label">8 · Roadmap draft</span><h2>Phases</h2></header>
+      <div class="roadmap">
+        <div class="phase"><span class="label">Phase 0</span><p><b>Spikes.</b> Tauri with the AI SDK over Rust HTTP for OpenAI, Anthropic and Ollama. Pyodide in a worker with a timeout. An Arabic RTL demo screen. An embedding benchmark in English and Arabic.</p></div>
+        <div class="phase"><span class="label">Phase 1</span><p><b>MVP: topic to lesson.</b> Onboarding, then objectives the learner confirms, then typed lessons with checks and mastery pacing. SQLite storage and an English/Arabic interface.</p></div>
+        <div class="phase"><span class="label">Phase 2</span><p><b>Labs.</b> Python and SQL labs with tests and feedback that explains why. An FSRS review queue.</p></div>
+        <div class="phase"><span class="label">Phase 3</span><p><b>Your sources.</b> Import PDF, MD and URLs. Local search. Grounded mode with citations.</p></div>
+        <div class="phase"><span class="label">Phase 4</span><p><b>Course packs.</b> <code>.tpack</code> import and export, an authoring loop, and two or three sample packs in English and Arabic.</p></div>
+        <div class="phase"><span class="label">Phase 5</span><p><b>Reach.</b> A PWA build, fully offline WebLLM mode, YouTube import, JS labs, and a community pack index hosted in a git repo, still with no server.</p></div>
+      </div>
+    </section>
+
+    <section id="questions">
+      <header><span class="label">9 · For the brainstorm</span><h2>Decisions still open</h2></header>
+      <ol class="questions">
+        <li>What is the product name and the one-line pitch?</li>
+        <li>For the v0.1 cut: lessons and checks only, or one lab type on day one? Python or SQL first?</li>
+        <li>Who comes first, the self-learner who generates anything or the teacher who authors packs?</li>
+        <li>Should the learner always confirm the generated objective list, or only when they want to?</li>
+        <li>Should the app recommend specific models or stay neutral?</li>
+        <li>Which license: MIT, Apache-2.0 or AGPL?</li>
+        <li>Which UI framework: React (the default here), Svelte or Solid?</li>
+        <li>Should v1 ship for Windows only, or for Windows, macOS and Linux from the start?</li>
+        <li>Should it have streaks and XP, or a calm, focused interface?</li>
+        <li>Is voice (text-to-speech or speech input) in v1, or later?</li>
+      </ol>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">Written for the AI_teacher_app repository and kept at <code>research/analysis.md</code>. Market figures come from public reporting and vendor pages. The 6× and $15M figures are unverified.</div></footer>

@@ -1,0 +1,15 @@
+docs/.locks/
+__pycache__/
+*.pyc
+.venv/
+*.tmp
+.pytest_cache/
+**/.claude/handoffs/
+node_modules/
+dist/
+target/
+
+# local secrets (never commit)
+.env
+.env.*
+!.env.example

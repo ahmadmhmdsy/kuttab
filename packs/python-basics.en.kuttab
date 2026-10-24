@@ -1,0 +1,110 @@
+{
+  "format": "kuttab",
+  "version": 1,
+  "id": "python-basics.en",
+  "title": "Python basics",
+  "description": "Write your first Python: variables, decisions, loops, and functions over lists. Code runs in a real Python interpreter inside the app.",
+  "lang": "en",
+  "author": "Kuttab contributors",
+  "license": "CC-BY-4.0",
+  "objectives": [
+    { "id": "variables", "title": "Values and variables", "summary": "Store values in variables and compute with them.", "prereqs": [], "lab": "python" },
+    { "id": "conditions", "title": "Decisions with if", "summary": "Choose what to do with if, elif and else.", "prereqs": ["variables"], "lab": "python" },
+    { "id": "loops", "title": "Repeat with for", "summary": "Repeat work over a range or a list with for loops.", "prereqs": ["conditions"], "lab": "python" },
+    { "id": "functions-lists", "title": "Functions over lists", "summary": "Write functions that take a list and return a result.", "prereqs": ["loops"], "lab": "python" }
+  ],
+  "lessons": [
+    {
+      "objectiveId": "variables",
+      "title": "Values and variables",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A **variable** is a name for a value. You create one with `=`:\n\n```python\nprice = 7\nname = 'Huda'\n```\n\nPython has several kinds of value: whole numbers (`int`) like `7`, decimals (`float`) like `2.5`, text (`str`) like `'Huda'`, and `True`/`False` (`bool`).\n\nYou can compute with variables using `+`, `-`, `*`, `/`, and `print()` shows a value." },
+        { "type": "example", "markdown": "Compute a total and show it. An f-string (`f'...'`) puts values inside text.", "code": "price = 7\nqty = 6\ntotal = price * qty\nprint(f'Total: {total}')", "language": "python" },
+        { "type": "check", "id": "py-var-type", "question": "What is the value of `x` after `x = 3` and then `x = x + 2`?", "choices": ["3", "5", "32", "An error"], "answer": 1, "explanation": "The right side is computed first (3 + 2), then the result is stored back in `x`." },
+        { "type": "exercise", "exercise": {
+          "id": "py-total",
+          "language": "python",
+          "prompt": "The variables `price` and `qty` already exist. Create a variable `total` that holds the price multiplied by the quantity.",
+          "starter": "# price and qty are already defined\ntotal = ",
+          "setup": "price = 7\nqty = 6",
+          "solution": "total = price * qty",
+          "wrong": ["total = price + qty", "total = '42'", "print(price * qty)"],
+          "check": { "kind": "tests", "code": "assert total == 42, 'total should be price times qty'\nassert isinstance(total, int), 'total should be a number, not text'" },
+          "hints": ["Multiplication uses *.", "Use the variable names, not the numbers."]
+        } },
+        { "type": "recap", "markdown": "- `name = value` creates or updates a variable.\n- Common types: `int`, `float`, `str`, `bool`.\n- `print()` shows values; f-strings put values into text." }
+      ]
+    },
+    {
+      "objectiveId": "conditions",
+      "title": "Decisions with if",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "`if` runs a block of code only when a condition is true. The block is the **indented** lines after the colon:\n\n```python\nif temperature > 30:\n    print('Hot')\nelif temperature > 15:\n    print('Mild')\nelse:\n    print('Cold')\n```\n\nPython checks the conditions from top to bottom and runs the first block whose condition is true. Comparisons: `==`, `!=`, `<`, `<=`, `>`, `>=`." },
+        { "type": "example", "markdown": "A function that labels a number. `return` sends a value back to whoever called the function.", "code": "def sign(n):\n    if n > 0:\n        return 'positive'\n    elif n < 0:\n        return 'negative'\n    else:\n        return 'zero'\n\nprint(sign(-4))", "language": "python" },
+        { "type": "check", "id": "py-if-equals", "question": "Which line checks whether `a` equals 10?", "choices": ["if a = 10:", "if a == 10:", "if a equals 10:", "if (a := 10)"], "answer": 1, "explanation": "`=` stores a value; `==` compares two values." },
+        { "type": "exercise", "exercise": {
+          "id": "py-grade",
+          "language": "python",
+          "prompt": "Write a function `result(score)` that returns `'pass'` when the score is **50 or more**, and `'fail'` otherwise.",
+          "starter": "def result(score):\n    ",
+          "solution": "def result(score):\n    if score >= 50:\n        return 'pass'\n    return 'fail'",
+          "wrong": ["def result(score):\n    if score > 50:\n        return 'pass'\n    return 'fail'", "def result(score):\n    return 'pass'", "def result(score):\n    if score >= 50:\n        print('pass')\n    else:\n        print('fail')"],
+          "check": { "kind": "tests", "code": "assert result(80) == 'pass', 'result(80) should be pass'\nassert result(50) == 'pass', 'exactly 50 should pass'\nassert result(49) == 'fail', 'result(49) should be fail'\nassert result(0) == 'fail', 'result(0) should be fail'" },
+          "hints": ["\"50 or more\" is >= 50.", "Use return, not print."]
+        } },
+        { "type": "recap", "markdown": "- `if` / `elif` / `else` choose between blocks.\n- Blocks are indented under a line ending in `:`.\n- `==` compares; `=` assigns." }
+      ]
+    },
+    {
+      "objectiveId": "loops",
+      "title": "Repeat with for",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A `for` loop runs its block once for each item in a sequence:\n\n```python\nfor fruit in ['apple', 'date', 'fig']:\n    print(fruit)\n```\n\n`range()` makes a sequence of numbers. `range(5)` is 0, 1, 2, 3, 4 (it stops *before* 5). `range(1, 6)` is 1 to 5, and `range(5, 0, -1)` counts down 5, 4, 3, 2, 1." },
+        { "type": "example", "markdown": "Add up the numbers from 1 to 10 with a running total:", "code": "total = 0\nfor n in range(1, 11):\n    total = total + n\nprint(total)", "language": "python" },
+        { "type": "check", "id": "py-range", "question": "Which numbers does `range(3)` produce?", "choices": ["1, 2, 3", "0, 1, 2", "0, 1, 2, 3", "3"], "answer": 1, "explanation": "`range(n)` starts at 0 and stops before n." },
+        { "type": "exercise", "exercise": {
+          "id": "py-countdown",
+          "language": "python",
+          "prompt": "Print a countdown: the numbers **5, 4, 3, 2, 1**, one per line, and then the word **Go!** on its own line.",
+          "starter": "for n in range(...):\n    print(n)\n",
+          "solution": "for n in range(5, 0, -1):\n    print(n)\nprint('Go!')",
+          "wrong": ["for n in range(5):\n    print(n)\nprint('Go!')", "for n in range(1, 6):\n    print(n)\nprint('Go!')", "for n in range(5, 0, -1):\n    print(n)"],
+          "check": { "kind": "stdout", "expected": "5\n4\n3\n2\n1\nGo!" },
+          "hints": ["range(start, stop, step) can count down with step -1.", "The stop value is not included."]
+        } },
+        { "type": "recap", "markdown": "- `for item in sequence:` repeats a block per item.\n- `range(start, stop, step)` stops before `stop`.\n- A running total starts at 0 and grows inside the loop." }
+      ]
+    },
+    {
+      "objectiveId": "functions-lists",
+      "title": "Functions over lists",
+      "lang": "en",
+      "blocks": [
+        { "type": "explain", "markdown": "A **list** holds values in order: `nums = [4, 7, 10]`. `len(nums)` is its length and `nums[0]` is its first item.\n\nFunctions that work on lists usually follow one pattern: start with an empty result, loop over the items, update the result, then `return` it. The `%` operator gives the remainder, so `n % 2 == 0` is true for even numbers." },
+        { "type": "example", "markdown": "Keep only the long words from a list. `.append()` adds an item to the end of a list.", "code": "def long_words(words):\n    out = []\n    for w in words:\n        if len(w) > 4:\n            out.append(w)\n    return out\n\nprint(long_words(['sun', 'river', 'sky', 'mountain']))", "language": "python" },
+        { "type": "check", "id": "py-even", "question": "Which expression is `True` exactly when `n` is even?", "choices": ["n / 2 == 0", "n % 2 == 0", "n % 2 == 1", "n // 2"], "answer": 1, "explanation": "An even number leaves remainder 0 when divided by 2." },
+        { "type": "exercise", "exercise": {
+          "id": "py-sum-even",
+          "language": "python",
+          "prompt": "Write a function `sum_even(nums)` that returns the **sum of the even numbers** in the list. An empty list gives 0.",
+          "starter": "def sum_even(nums):\n    ",
+          "solution": "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 0:\n            total += n\n    return total",
+          "wrong": ["def sum_even(nums):\n    return sum(nums)", "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 1:\n            total += n\n    return total", "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 0:\n            total += 1\n    return total"],
+          "check": { "kind": "tests", "code": "assert sum_even([1, 2, 3, 4]) == 6, 'sum_even([1, 2, 3, 4]) should be 6'\nassert sum_even([]) == 0, 'an empty list should give 0'\nassert sum_even([5, 7]) == 0, 'no even numbers should give 0'\nassert sum_even([10, -2, 3]) == 8, 'negative even numbers count too'" },
+          "hints": ["Start with total = 0.", "Use n % 2 == 0 to test for even numbers."]
+        } },
+        { "type": "recap", "markdown": "- Lists hold ordered values; `len()` gives the length.\n- Pattern: empty result → loop → update → return.\n- `%` gives the remainder; `n % 2 == 0` means even." }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "python-reference",
+      "title": "Python basics reference card",
+      "markdown": "# Python basics reference card\n\n## Variables and types\n`name = value` creates or updates a variable. Types: `int` (whole numbers), `float` (decimals), `str` (text in quotes), `bool` (`True`/`False`), `list` (`[1, 2, 3]`). `type(x)` tells you the type.\n\n## Operators\nArithmetic: `+ - * /`, `//` (whole-number division), `%` (remainder), `**` (power). Comparison: `== != < <= > >=`. Logic: `and`, `or`, `not`.\n\n## if / elif / else\nConditions are checked top to bottom; the first true one runs. Blocks are indented under a line ending in a colon.\n\n## for loops and range\n`for x in seq:` runs once per item. `range(stop)` starts at 0; `range(start, stop, step)` stops before stop.\n\n## Functions\n`def name(params):` defines a function. `return value` sends a result back; `print` only shows text and returns `None`.\n\n## Lists\n`len(lst)`, `lst[0]` (first item), `lst[-1]` (last item), `lst.append(x)`, `sum(lst)`, `max(lst)`, `min(lst)`."
+    }
+  ]
+}

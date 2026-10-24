@@ -1,0 +1,110 @@
+{
+  "format": "kuttab",
+  "version": 1,
+  "id": "python-basics.ar",
+  "title": "أساسيات بايثون",
+  "description": "اكتب أول برامجك ببايثون: المتغيرات، والقرارات، والحلقات، والدوال على القوائم. الشيفرة تعمل في مفسّر بايثون حقيقي داخل التطبيق.",
+  "lang": "ar",
+  "author": "مساهمو كُتّاب",
+  "license": "CC-BY-4.0",
+  "objectives": [
+    { "id": "variables", "title": "القيم والمتغيرات", "summary": "خزّن القيم في متغيرات واحسب بها.", "prereqs": [], "lab": "python" },
+    { "id": "conditions", "title": "القرارات بـ if", "summary": "اختر ما يُنفَّذ باستخدام if و elif و else.", "prereqs": ["variables"], "lab": "python" },
+    { "id": "loops", "title": "التكرار بـ for", "summary": "كرّر العمل على مدى من الأرقام أو قائمة بحلقات for.", "prereqs": ["conditions"], "lab": "python" },
+    { "id": "functions-lists", "title": "دوال تعمل على القوائم", "summary": "اكتب دوال تأخذ قائمة وتُرجع نتيجة.", "prereqs": ["loops"], "lab": "python" }
+  ],
+  "lessons": [
+    {
+      "objectiveId": "variables",
+      "title": "القيم والمتغيرات",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "**المتغير** اسم لقيمة. تُنشئه بعلامة `=`:\n\n```python\nprice = 7\nname = 'Huda'\n```\n\nفي بايثون أنواع عدة من القيم: الأعداد الصحيحة (`int`) مثل `7`، والأعداد العشرية (`float`) مثل `2.5`، والنصوص (`str`) مثل `'Huda'`، والقيم المنطقية `True` و`False` (`bool`).\n\nيمكنك الحساب بالمتغيرات باستخدام `+` و`-` و`*` و`/`، وتعرض `print()` القيمة على الشاشة." },
+        { "type": "example", "markdown": "احسب المجموع واعرضه. النص المنسَّق (`f'...'`) يضع القيم داخل النص.", "code": "price = 7\nqty = 6\ntotal = price * qty\nprint(f'Total: {total}')", "language": "python" },
+        { "type": "check", "id": "py-var-type", "question": "ما قيمة `x` بعد `x = 3` ثم `x = x + 2`؟", "choices": ["3", "5", "32", "خطأ"], "answer": 1, "explanation": "يُحسب الطرف الأيمن أولًا (3 + 2)، ثم تُخزَّن النتيجة في `x`." },
+        { "type": "exercise", "exercise": {
+          "id": "py-total",
+          "language": "python",
+          "prompt": "المتغيران `price` (السعر) و`qty` (الكمية) معرّفان مسبقًا. أنشئ متغيرًا اسمه `total` يساوي السعر مضروبًا في الكمية.",
+          "starter": "# price و qty معرّفان مسبقًا\ntotal = ",
+          "setup": "price = 7\nqty = 6",
+          "solution": "total = price * qty",
+          "wrong": ["total = price + qty", "total = '42'", "print(price * qty)"],
+          "check": { "kind": "tests", "code": "assert total == 42, 'يجب أن يساوي total السعر مضروبًا في الكمية'\nassert isinstance(total, int), 'يجب أن يكون total رقمًا لا نصًّا'" },
+          "hints": ["الضرب يُكتب بـ *.", "استخدم أسماء المتغيرات لا الأرقام."]
+        } },
+        { "type": "recap", "markdown": "- `name = value` تُنشئ متغيرًا أو تحدّثه.\n- الأنواع الشائعة: `int` و`float` و`str` و`bool`.\n- `print()` تعرض القيم، والنص المنسَّق يضع القيم داخل النص." }
+      ]
+    },
+    {
+      "objectiveId": "conditions",
+      "title": "القرارات بـ if",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "تنفّذ `if` مجموعة أسطر فقط عندما يتحقق شرط. المجموعة هي الأسطر **المزاحة** بعد النقطتين:\n\n```python\nif temperature > 30:\n    print('Hot')\nelif temperature > 15:\n    print('Mild')\nelse:\n    print('Cold')\n```\n\nتفحص بايثون الشروط من الأعلى إلى الأسفل وتنفّذ أول مجموعة يتحقق شرطها. عوامل المقارنة: `==` و`!=` و`<` و`<=` و`>` و`>=`." },
+        { "type": "example", "markdown": "دالة تصنّف رقمًا. تُعيد `return` قيمة إلى من استدعى الدالة.", "code": "def sign(n):\n    if n > 0:\n        return 'positive'\n    elif n < 0:\n        return 'negative'\n    else:\n        return 'zero'\n\nprint(sign(-4))", "language": "python" },
+        { "type": "check", "id": "py-if-equals", "question": "أيّ سطر يفحص هل `a` تساوي 10؟", "choices": ["if a = 10:", "if a == 10:", "if a equals 10:", "if (a := 10)"], "answer": 1, "explanation": "`=` تخزّن قيمة، و`==` تقارن بين قيمتين." },
+        { "type": "exercise", "exercise": {
+          "id": "py-grade",
+          "language": "python",
+          "prompt": "اكتب دالة `result(score)` تُرجع `'pass'` إذا كانت الدرجة **50 أو أكثر**، و`'fail'` غير ذلك.",
+          "starter": "def result(score):\n    ",
+          "solution": "def result(score):\n    if score >= 50:\n        return 'pass'\n    return 'fail'",
+          "wrong": ["def result(score):\n    if score > 50:\n        return 'pass'\n    return 'fail'", "def result(score):\n    return 'pass'", "def result(score):\n    if score >= 50:\n        print('pass')\n    else:\n        print('fail')"],
+          "check": { "kind": "tests", "code": "assert result(80) == 'pass', 'result(80) يجب أن تكون pass'\nassert result(50) == 'pass', 'الدرجة 50 بالضبط يجب أن تنجح'\nassert result(49) == 'fail', 'result(49) يجب أن تكون fail'\nassert result(0) == 'fail', 'result(0) يجب أن تكون fail'" },
+          "hints": ["«50 أو أكثر» تعني >= 50.", "استخدم return لا print."]
+        } },
+        { "type": "recap", "markdown": "- `if` و`elif` و`else` تختار بين مجموعات الأسطر.\n- المجموعة مزاحة تحت سطر ينتهي بـ `:`.\n- `==` للمقارنة و`=` للإسناد." }
+      ]
+    },
+    {
+      "objectiveId": "loops",
+      "title": "التكرار بـ for",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "تنفّذ حلقة `for` مجموعتها مرة لكل عنصر في سلسلة:\n\n```python\nfor fruit in ['apple', 'date', 'fig']:\n    print(fruit)\n```\n\nتصنع `range()` سلسلة أرقام. `range(5)` هي 0 و1 و2 و3 و4 (تتوقف *قبل* 5). و`range(1, 6)` من 1 إلى 5، و`range(5, 0, -1)` تعدّ تنازليًا 5 و4 و3 و2 و1." },
+        { "type": "example", "markdown": "اجمع الأرقام من 1 إلى 10 بمجموع متراكم:", "code": "total = 0\nfor n in range(1, 11):\n    total = total + n\nprint(total)", "language": "python" },
+        { "type": "check", "id": "py-range", "question": "ما الأرقام التي تنتجها `range(3)`؟", "choices": ["1 و2 و3", "0 و1 و2", "0 و1 و2 و3", "3"], "answer": 1, "explanation": "تبدأ `range(n)` من 0 وتتوقف قبل n." },
+        { "type": "exercise", "exercise": {
+          "id": "py-countdown",
+          "language": "python",
+          "prompt": "اطبع عدًّا تنازليًا: الأرقام **5 و4 و3 و2 و1**، كل رقم في سطر، ثم الكلمة **Go!** في سطر مستقل.",
+          "starter": "for n in range(...):\n    print(n)\n",
+          "solution": "for n in range(5, 0, -1):\n    print(n)\nprint('Go!')",
+          "wrong": ["for n in range(5):\n    print(n)\nprint('Go!')", "for n in range(1, 6):\n    print(n)\nprint('Go!')", "for n in range(5, 0, -1):\n    print(n)"],
+          "check": { "kind": "stdout", "expected": "5\n4\n3\n2\n1\nGo!" },
+          "hints": ["يمكن لـ range(start, stop, step) أن تعدّ تنازليًا بخطوة -1.", "قيمة التوقف لا تُشمل."]
+        } },
+        { "type": "recap", "markdown": "- `for item in sequence:` تكرّر المجموعة لكل عنصر.\n- `range(start, stop, step)` تتوقف قبل `stop`.\n- المجموع المتراكم يبدأ من 0 ويزيد داخل الحلقة." }
+      ]
+    },
+    {
+      "objectiveId": "functions-lists",
+      "title": "دوال تعمل على القوائم",
+      "lang": "ar",
+      "blocks": [
+        { "type": "explain", "markdown": "**القائمة** تحفظ القيم بترتيب: `nums = [4, 7, 10]`. يعطي `len(nums)` طولها، و`nums[0]` أول عنصر فيها.\n\nالدوال التي تعمل على القوائم تتبع غالبًا نمطًا واحدًا: ابدأ بنتيجة فارغة، ومرّ على العناصر، وحدّث النتيجة، ثم أعدها بـ `return`. العامل `%` يعطي باقي القسمة، لذا يكون `n % 2 == 0` صحيحًا للأعداد الزوجية." },
+        { "type": "example", "markdown": "أبقِ الكلمات الطويلة فقط من قائمة. تضيف `.append()` عنصرًا إلى نهاية القائمة.", "code": "def long_words(words):\n    out = []\n    for w in words:\n        if len(w) > 4:\n            out.append(w)\n    return out\n\nprint(long_words(['sun', 'river', 'sky', 'mountain']))", "language": "python" },
+        { "type": "check", "id": "py-even", "question": "أيّ تعبير يكون `True` تمامًا عندما يكون `n` زوجيًا؟", "choices": ["n / 2 == 0", "n % 2 == 0", "n % 2 == 1", "n // 2"], "answer": 1, "explanation": "العدد الزوجي باقي قسمته على 2 يساوي 0." },
+        { "type": "exercise", "exercise": {
+          "id": "py-sum-even",
+          "language": "python",
+          "prompt": "اكتب دالة `sum_even(nums)` تُرجع **مجموع الأعداد الزوجية** في القائمة. القائمة الفارغة تعطي 0.",
+          "starter": "def sum_even(nums):\n    ",
+          "solution": "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 0:\n            total += n\n    return total",
+          "wrong": ["def sum_even(nums):\n    return sum(nums)", "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 1:\n            total += n\n    return total", "def sum_even(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 0:\n            total += 1\n    return total"],
+          "check": { "kind": "tests", "code": "assert sum_even([1, 2, 3, 4]) == 6, 'sum_even([1, 2, 3, 4]) يجب أن تساوي 6'\nassert sum_even([]) == 0, 'القائمة الفارغة تعطي 0'\nassert sum_even([5, 7]) == 0, 'لا أعداد زوجية يعني 0'\nassert sum_even([10, -2, 3]) == 8, 'الأعداد الزوجية السالبة تُحسب أيضًا'" },
+          "hints": ["ابدأ بـ total = 0.", "استخدم n % 2 == 0 لفحص الزوجية."]
+        } },
+        { "type": "recap", "markdown": "- القوائم تحفظ قيمًا مرتبة، و`len()` تعطي الطول.\n- النمط: نتيجة فارغة ← حلقة ← تحديث ← إرجاع.\n- `%` تعطي باقي القسمة، و`n % 2 == 0` تعني زوجي." }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "python-reference",
+      "title": "بطاقة مرجعية لأساسيات بايثون",
+      "markdown": "# بطاقة مرجعية لأساسيات بايثون\n\n## المتغيرات والأنواع\n`name = value` تُنشئ متغيرًا أو تحدّثه. الأنواع: `int` (أعداد صحيحة)، و`float` (عشرية)، و`str` (نص بين علامتي اقتباس)، و`bool` (`True` أو `False`)، و`list` (`[1, 2, 3]`). تخبرك `type(x)` بنوع القيمة.\n\n## العوامل\nالحساب: `+ - * /`، و`//` (قسمة صحيحة)، و`%` (باقي القسمة)، و`**` (الأس). المقارنة: `== != < <= > >=`. المنطق: `and` و`or` و`not`.\n\n## if و elif و else\nتُفحص الشروط من الأعلى إلى الأسفل، ويُنفَّذ أول شرط صحيح. المجموعات مزاحة تحت سطر ينتهي بنقطتين.\n\n## حلقات for و range\n`for x in seq:` تُنفَّذ مرة لكل عنصر. `range(stop)` تبدأ من 0، و`range(start, stop, step)` تتوقف قبل stop.\n\n## الدوال\n`def name(params):` تعرّف دالة. `return value` تُعيد نتيجة، أما `print` فتعرض نصًّا فقط وتُرجع `None`.\n\n## القوائم\n`len(lst)`، و`lst[0]` (أول عنصر)، و`lst[-1]` (آخر عنصر)، و`lst.append(x)`، و`sum(lst)`، و`max(lst)`، و`min(lst)`."
+    }
+  ]
+}
