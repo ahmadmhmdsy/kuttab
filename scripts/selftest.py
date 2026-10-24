@@ -134,7 +134,10 @@ class TestAdoptLite(unittest.TestCase):
         self.assertFalse(adopt.LITE_DROP & pm.PROTECTED_RULES)
 
     def test_lite_names_only_shipped_modules(self):
-        self.assertLessEqual(set(adopt.LITE_DROP), set(adopt.shipped_rule_numbers()))
+        shipped = set(adopt.shipped_rule_numbers())
+        if shipped.isdisjoint(adopt.LITE_DROP):
+            self.skipTest("adopted with --lite: the dropped modules are already gone")
+        self.assertLessEqual(set(adopt.LITE_DROP), shipped)
 
 
 class TestHandoffLag(unittest.TestCase):
