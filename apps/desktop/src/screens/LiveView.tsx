@@ -1,7 +1,7 @@
 // Live lesson, Chat mode: the tutor leads, speaks each sentence as it goes, and
 // draws on a board with history. Built on the engine's LiveSession.
 import { useEffect, useRef, useState } from "react";
-import { LiveSession, boardHistory, lessonPlainText, llmBrain, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
+import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
 import { kbEmbed, makeCtx } from "../ai.ts";
@@ -37,6 +37,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const [input, setInput] = useState("");
   const [readAloud, setReadAloud] = useState(tts && canSpeak());
   const [mode, setMode] = useState<Mode>("chat");
+  const [learnt, setLearnt] = useState(false);
   const readRef = useRef(readAloud);
   // Voice mode always speaks; the checkbox only governs Chat mode.
   readRef.current = readAloud || mode === "voice";
@@ -46,6 +47,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
     let live = true;
     const abort = new AbortController();
     let s: LiveSession | undefined;
+    let learned = false;
     setErr(undefined);
     setSession(undefined);
     void (async () => {
@@ -64,7 +66,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
         lesson ? lessonPlainText(lesson) : "",
         ...hits.map((h) => `[${h.source.title}] ${h.chunk.text}`),
       ].filter(Boolean).join("\n\n");
-      const brain = llmBrain(await makeCtx(abort.signal), lang, { material });
+      const brain = llmBrain(await makeCtx(abort.signal), lang, { material, learner: memoryText(await course.memory(), planId) || undefined });
       const speaker: Speaker = {
         async speak(text, signal) {
           const parts = sentences(text);
@@ -84,6 +86,14 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
         if (e.type === "graded") void course.record(planId, objectiveId, "check", e.correct).then(refreshCounters);
         if (e.type === "error") setErr(e.error);
         if (e.type === "state") void course.saveLiveRecord(planId, objectiveId, s!.record);
+        if (e.type === "state" && e.state === "done" && !learned) {
+          // Not tied to this screen's abort: leaving right after the end should not lose what the session showed.
+          learned = true;
+          const rec = s!.record;
+          void (async () => course.saveMemory(await learnFromSession(await makeCtx(), rec, await course.memory(), lang)))()
+            .then(() => live && setLearnt(true))
+            .catch(() => undefined);
+        }
         setTick((n) => n + 1);
       });
       setSession(s);
@@ -236,6 +246,12 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
           {state === "done" ? (
             <Card>
               <strong>{t("liveDone")}</strong>
+              {learnt && (
+                <p className="muted">
+                  {t("liveLearned")}{" "}
+                  <button className="link" onClick={() => go({ name: "memory" })}>{t("tutorKnows")}</button>
+                </p>
+              )}
               <div className="row">
                 <button className="primary" onClick={() => go({ name: "lesson", planId, objectiveId })}>
                   📖 {t("liveNotes")}

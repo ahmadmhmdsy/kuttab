@@ -1,7 +1,7 @@
 // Builds engine contexts from the learner's model settings. Keys come from the
 // secret store at call time and are never kept in app state, logged or exported.
 import { embedMany, generateText } from "ai";
-import { TEACHER_TOOLS, type Ctx, type TeacherTool, type ToolHost } from "@kuttab/engine";
+import { TEACHER_TOOLS, addFacts, type Ctx, type TeacherTool, type ToolHost } from "@kuttab/engine";
 import type { Embed } from "@kuttab/kb";
 import { createEmbedder, createModel, estimateCost, listModels, providerInfo, supportsTools, type FetchFn } from "@kuttab/llm-gateway";
 import { webLlmFetch } from "./platform/webllm.ts";
@@ -68,10 +68,8 @@ export function toolHost(): ToolHost {
       ? async (q) => (await kb.search(q, 4, await kbEmbed())).map((h) => ({ title: h.chunk.locator ? `${h.source.title} (${h.chunk.locator})` : h.source.title, text: h.chunk.text }))
       : undefined,
     rememberFact: async (fact) => {
-      const st = useStore.getState();
-      if (!st.profile) return;
-      const notes = [st.profile.notes, `- ${fact.trim()}`].filter(Boolean).join("\n").slice(-2000);
-      st.setProfile({ ...st.profile, notes });
+      const { course } = services();
+      await course.saveMemory(addFacts(await course.memory(), [{ text: fact, from: "chat" }]));
     },
   };
 }

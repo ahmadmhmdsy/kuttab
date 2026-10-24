@@ -33,6 +33,13 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T13:10:00+03:00 — T-20 done: learner memory and "What the tutor knows about me"
+
+- **State:** the tutor keeps short facts about the learner on the device, learns more after each live session, reads them at the start of each session, and shows them on an editable page. Nothing committed since `bf3595b`.
+- **Did:** new `packages/engine/src/memory.ts`: `LearnerMemory` (facts with text, optional `trackId`, `from` session/chat/you), `addFacts` (dedupe per scope, at most 30 per scope, your own facts kept longest), `memoryText` (global facts plus this course's), `learnFromSession` (structured model call, at most 4 new facts; falls back to unfixed mistakes when no model answers). Store key `memory`; `Course.memory()`/`saveMemory()`; deleting a course drops its facts. `llmBrain` takes `learner` and adds it to the system prompt. Desktop: `LiveView` passes the memory in and learns when the session ends (not cancelled by leaving the page); the done card links to the page. New `screens/Memory.tsx` (route `memory`, linked from Settings > About you): global and per-course facts, edit, delete, add. The chat tool `remember_learner_fact` now adds a global fact instead of appending to profile notes. Backup and erase already cover every store key. New en/ar strings.
+- **Verified:** tsc clean (engine, desktop); vitest 71/71 (6 memory tests, including the prompt carrying the memory). Tauri over CDP with Gemini, Arabic: after a wrong answer and End, one global and one course fact appeared; editing, adding and deleting kept after a reload.
+- **Unverified / open:** lesson and plan generation still read only profile notes, not the memory. Older facts saved by chat in profile notes were not moved over. The facts are what the model wrote; the learner can correct them on the page.
+- **Next:** the next pending task in `docs/04-tasks.md`.
 ## 2026-10-24T11:10:00+03:00 — T-19 done: Read mode and live-session notes
 
 - **State:** the lesson page is Read mode beside Live; after a live session it shows that session's notes. Nothing committed.

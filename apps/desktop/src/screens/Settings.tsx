@@ -175,11 +175,12 @@ function TeacherPanel() {
 
 function LearningPanel() {
   const t = useT();
-  const { profile, setProfile } = useStore();
+  const { profile, setProfile, go } = useStore();
   return (
     <Card>
       <h2>{t("aboutYou")}</h2>
       <ProfileForm key={JSON.stringify(profile)} initial={profile} onSave={setProfile} />
+      <button className="link" onClick={() => go({ name: "memory" })}>🧠 {t("tutorKnows")}</button>
     </Card>
   );
 }

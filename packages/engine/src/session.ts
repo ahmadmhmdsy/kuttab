@@ -489,6 +489,8 @@ export interface LlmBrainOptions {
   teacher?: string;
   /** Stop after this many teaching beats (replies not counted). */
   maxBeats?: number;
+  /** What the tutor knows about the learner (memoryText), read at session start. */
+  learner?: string;
 }
 
 const NextBeat = z.object({
@@ -509,7 +511,10 @@ export const BOARD_FORMATS =
 
 /** The tutor leads with an LLM: one structured beat per call. */
 export function llmBrain(ctx: Ctx, lang: Lang, opts: LlmBrainOptions): TutorBrain {
-  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS} ${languageRule(lang)}`;
+  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS} ${languageRule(lang)}${opts.learner ? `
+
+What you know about this learner (use it to teach them better; do not recite it):
+${opts.learner}` : ""}`;
   let taught = 0;
   return {
     async nextBeat(rec) {

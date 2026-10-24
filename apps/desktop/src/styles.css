@@ -1239,3 +1239,10 @@ main.live {
 .notes-qa p {
   margin: 0.2rem 0;
 }
+
+/* What the tutor knows about me */
+.facts { list-style: none; padding: 0; margin: 0 0 12px; }
+.fact { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.fact > span, .fact > input { flex: 1; }
+.fact small { white-space: nowrap; }
+.memory .row input { flex: 1; }

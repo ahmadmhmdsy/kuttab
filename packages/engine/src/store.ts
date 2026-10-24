@@ -28,6 +28,7 @@ export class MemoryStore implements KvStore {
 /** Key layout, kept in one place so stores and migrations agree. */
 export const K = {
   profile: "profile",
+  memory: "memory",
   settings: "settings",
   streak: "streak",
   plans: "plans/",

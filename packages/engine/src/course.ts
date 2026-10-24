@@ -7,6 +7,7 @@ import { markStudied, type Streak } from "./streak.ts";
 import type { Plan } from "./plan.ts";
 import type { Lesson, LearnerProfile } from "./schema.ts";
 import type { LessonRecord } from "./session.ts";
+import { LearnerMemory } from "./memory.ts";
 
 export class Course {
   constructor(private store: KvStore) {}
@@ -16,6 +17,14 @@ export class Course {
   }
   saveProfile(p: LearnerProfile): Promise<void> {
     return this.store.set(K.profile, p);
+  }
+
+  async memory(): Promise<LearnerMemory> {
+    const m = LearnerMemory.safeParse(await this.store.get(K.memory));
+    return m.success ? m.data : { facts: [] };
+  }
+  saveMemory(m: LearnerMemory): Promise<void> {
+    return this.store.set(K.memory, m);
   }
 
   async plans(): Promise<Plan[]> {
@@ -35,6 +44,8 @@ export class Course {
     for (const k of await this.store.keys(`lessons/${id}/`)) await this.store.delete(k);
     for (const k of await this.store.keys(`live/${id}/`)) await this.store.delete(k);
     for (const c of await this.cards()) if (c.planId === id) await this.store.delete(K.card(c.id));
+    const mem = await this.memory();
+    if (mem.facts.some((f) => f.trackId === id)) await this.saveMemory({ facts: mem.facts.filter((f) => f.trackId !== id) });
   }
 
   async mastery(planId: string): Promise<MasteryMap> {

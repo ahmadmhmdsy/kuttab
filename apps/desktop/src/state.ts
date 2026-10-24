@@ -79,7 +79,8 @@ export type Route =
   | { name: "review" }
   | { name: "sources" }
   | { name: "playground" }
-  | { name: "settings" };
+  | { name: "settings" }
+  | { name: "memory" };
 
 interface AppState {
   ready: boolean;

@@ -11,6 +11,7 @@ import { Review } from "./screens/Review.tsx";
 import { Sources } from "./screens/Sources.tsx";
 import { Playground } from "./screens/Playground.tsx";
 import { Settings, UsageText } from "./screens/Settings.tsx";
+import { Memory } from "./screens/Memory.tsx";
 
 const NAV: { name: Route["name"]; label: StrKey }[] = [
   { name: "library", label: "library" },
@@ -38,6 +39,8 @@ function Screen({ route }: { route: Route }) {
       return <Playground />;
     case "settings":
       return <Settings />;
+    case "memory":
+      return <Memory />;
   }
 }
 
@@ -48,7 +51,7 @@ export function App() {
   useEffect(() => onWebLlmProgress((p) => setLlm(p.progress >= 1 ? undefined : p)), []);
 
   if (!settings.onboarded) return <Onboarding />;
-  const section = route.name === "plan" || route.name === "lesson" || route.name === "live" ? "library" : route.name;
+  const section = route.name === "plan" || route.name === "lesson" || route.name === "live" ? "library" : route.name === "memory" ? "settings" : route.name;
 
   return (
     <div className="app">
