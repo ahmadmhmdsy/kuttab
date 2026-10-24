@@ -40,4 +40,6 @@ export interface Platform {
   openUrl(url: string): Promise<void>;
   /** Absent in a plain browser. */
   web?: WebWindow;
+  /** Memory, CPUs and free disk (desktop only; a browser can only guess). */
+  hardware?(): Promise<{ ramGb: number; cpus: number; diskFreeGb?: number }>;
 }

@@ -53,6 +53,12 @@ export interface Settings {
   askBeforeCode: boolean;
   /** headless: the browser route works in a hidden window. */
   search: { kind: SearchKind; searxngUrl?: string; headless?: boolean };
+  /** The local model a live session moves to when its budget runs out (decision 0002 item 6). */
+  local?: ModelChoice;
+  /** USD per live session; unset means no limit. */
+  liveBudget?: number;
+  /** low: the model writes the section once and a voice reads it (low-compute mode). */
+  liveMode: "live" | "low";
   onboarded: boolean;
 }
 
@@ -70,6 +76,7 @@ export const DEFAULT_SETTINGS: Settings = {
   toolsOff: [],
   askBeforeCode: true,
   search: { kind: "off" },
+  liveMode: "live",
   onboarded: false,
 };
 

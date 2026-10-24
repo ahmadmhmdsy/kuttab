@@ -1,10 +1,10 @@
 // Live lesson, Chat mode: the tutor leads, speaks each sentence as it goes, and
 // draws on a board with history. Built on the engine's LiveSession.
 import { useEffect, useRef, useState } from "react";
-import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
+import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, scriptBrain, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
-import { makeCtx, stepHits } from "../ai.ts";
+import { liveCtx, makeCtx, stepHits, teacherIsLocal } from "../ai.ts";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
 import { BoardItem } from "../components/Board.tsx";
 import { WHISPER_SIZE_MB, canSpeak, sentences, stopSpeaking, whisperCached } from "../speech.ts";
@@ -79,13 +79,17 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
       ].filter(Boolean).join("\n\n");
       const known = (await course.mastery(planId))[objectiveId]?.score;
       setLevel(known);
-      const { voice: vs, whisper } = useStore.getState().settings;
-      const brain = llmBrain(await makeCtx(abort.signal), lang, {
+      const { voice: vs, whisper, liveMode } = useStore.getState().settings;
+      const ctx = await liveCtx(abort.signal, (to) => live && setNotice(t(to === "local" ? "budgetLocal" : "budgetNone")));
+      const brainOpts = {
         material,
         learner: memoryText(await course.memory(), planId) || undefined,
         level: known,
         dialect: lang === "ar" ? vs.dialect : undefined,
-      });
+      };
+      const brain = (liveMode === "low" ? scriptBrain : llmBrain)(ctx, lang, brainOpts);
+      // A local model that is slow to start: suggest low-compute mode once.
+      const slow = liveMode === "live" && teacherIsLocal() ? setTimeout(() => live && setNotice(t("slowLocal")), 20_000) : undefined;
       const speaker: Speaker = {
         async speak(text, signal) {
           const parts = sentences(text);
@@ -108,6 +112,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
       s = new LiveSession({ brain, speaker, lang, title: objective.title, objectiveId, trackId: planId, record: saved && !saved.endedAt ? saved : undefined });
       s.on((e) => {
         if (e.type === "say") {
+          clearTimeout(slow);
           setCurrent({ text: e.text, beat: e.beat });
           setFeedback(undefined);
         }

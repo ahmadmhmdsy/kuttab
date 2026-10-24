@@ -80,5 +80,6 @@ export function tauriPlatform(): Platform {
     },
     openUrl: (url) => openUrl(url),
     web,
+    hardware: () => invoke("hardware"),
   };
 }

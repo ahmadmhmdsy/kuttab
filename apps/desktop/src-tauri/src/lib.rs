@@ -3,6 +3,7 @@
 // are never logged or returned anywhere except to the caller that asked.
 // The search window (browser.rs) is the fourth.
 mod browser;
+mod hardware;
 
 use std::sync::Mutex;
 
@@ -124,6 +125,7 @@ pub fn run() {
             secret_set,
             secret_delete,
             export_file,
+            hardware::hardware,
             browser::browser_open,
             browser::browser_capture,
             browser::browser_show,

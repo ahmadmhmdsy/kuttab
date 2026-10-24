@@ -1,9 +1,9 @@
 // Builds engine contexts from the learner's model settings. Keys come from the
 // secret store at call time and are never kept in app state, logged or exported.
 import { embedMany, generateText } from "ai";
-import { TEACHER_TOOLS, addFacts, objectiveQuery, packHits, type Ctx, type Objective, type TeacherTool, type ToolHost } from "@kuttab/engine";
+import { TEACHER_TOOLS, addFacts, budgetCtx, objectiveQuery, packHits, type Ctx, type Objective, type TeacherTool, type ToolHost } from "@kuttab/engine";
 import type { Embed, Hit } from "@kuttab/kb";
-import { createEmbedder, createModel, estimateCost, listModels, providerInfo, supportsTools, type FetchFn } from "@kuttab/llm-gateway";
+import { createEmbedder, createModel, estimateCost, isLocalModel, listModels, providerInfo, supportsTools, type FetchFn } from "@kuttab/llm-gateway";
 import { webLlmFetch } from "./platform/webllm.ts";
 import { addUsage, modelKey, services, useStore, type ModelChoice } from "./state.ts";
 
@@ -51,6 +51,32 @@ export async function makeCtx(signal?: AbortSignal): Promise<Ctx> {
       addUsage(u.inputTokens ?? 0, u.outputTokens ?? 0, estimateCost(who.provider, who.model, u, prices));
     },
   };
+}
+
+/** True when the live session runs on this machine (local server or in-browser model). */
+export function teacherIsLocal(): boolean {
+  const t = useStore.getState().settings.teacher;
+  return !!t?.model && isLocalModel({ provider: t.provider, baseURL: baseURLFor(t) });
+}
+
+/**
+ * Context for a live session: with a budget set and a cloud teacher, calls stop
+ * at the limit and the session moves to the learner's local model.
+ */
+export async function liveCtx(signal: AbortSignal, onSwitch: (to: "local" | "none") => void): Promise<Ctx> {
+  const base = await makeCtx(signal);
+  const { teacher, grader, local, liveBudget, prices } = useStore.getState().settings;
+  if (!liveBudget || !teacher || teacherIsLocal()) return base;
+  const g = grader?.model ? grader : undefined;
+  return budgetCtx(base, {
+    limit: liveBudget,
+    cost: (u) => {
+      const who = u.role === "grader" && g ? g : teacher;
+      return estimateCost(who.provider, who.model, u, prices);
+    },
+    fallback: local?.model ? { teacher: await model(local) } : undefined,
+    onSwitch,
+  });
 }
 
 /** The teacher tools to offer: none for models without tool calls, minus what the learner switched off. */

@@ -9,6 +9,7 @@ import { KeyField, ModelPicker } from "../components/ModelPicker.tsx";
 import { searchKeyId } from "../web.ts";
 import { ProfileForm } from "../components/ProfileForm.tsx";
 import { Card } from "../components/common.tsx";
+import { LocalPanel } from "../components/LocalPanel.tsx";
 import { canSpeak, WHISPER_SIZE_MB } from "../speech.ts";
 
 export function UsageText({ u }: { u: Usage }) {
@@ -22,10 +23,10 @@ export function UsageText({ u }: { u: Usage }) {
   );
 }
 
-const TABS = ["models", "teacher", "learning", "voice", "appearance", "usage", "privacy"] as const;
+const TABS = ["models", "local", "teacher", "learning", "voice", "appearance", "usage", "privacy"] as const;
 type Tab = (typeof TABS)[number];
-const TAB_LABEL = { models: "tabModels", teacher: "tabTeacher", learning: "tabLearning", voice: "tabVoice", appearance: "tabAppearance", usage: "tabUsage", privacy: "tabPrivacy" } as const;
-const TAB_LEAD = { models: "modelsLead", teacher: "teacherLead", learning: "learningLead", voice: "voiceLead", appearance: "appearanceLead", usage: "usageLead", privacy: "privacyLead" } as const;
+const TAB_LABEL = { models: "tabModels", local: "tabLocal", teacher: "tabTeacher", learning: "tabLearning", voice: "tabVoice", appearance: "tabAppearance", usage: "tabUsage", privacy: "tabPrivacy" } as const;
+const TAB_LEAD = { models: "modelsLead", local: "localLead", teacher: "teacherLead", learning: "learningLead", voice: "voiceLead", appearance: "appearanceLead", usage: "usageLead", privacy: "privacyLead" } as const;
 const TAB_KEY = "kuttab.settingsTab";
 
 function initialTab(): Tab {
@@ -52,6 +53,7 @@ export function Settings() {
 
   const panels: Record<Tab, () => ReactNode> = {
     models: () => <ModelsPanel />,
+    local: () => <LocalPanel />,
     teacher: () => <TeacherPanel />,
     learning: () => <LearningPanel />,
     voice: () => <VoicePanel />,
@@ -394,6 +396,20 @@ function UsagePanel() {
           {t("usageTotal")}: <UsageText u={total} />
         </p>
         <button onClick={resetUsage}>{t("resetUsage")}</button>
+      </Card>
+      <Card>
+        <h2>{t("liveBudget")}</h2>
+        <p className="muted">{t("liveBudgetLead")}</p>
+        <input
+          type="number"
+          min={0}
+          step="0.05"
+          value={settings.liveBudget ?? ""}
+          onChange={(e) => {
+            const n = e.target.value === "" ? undefined : Number(e.target.value);
+            updateSettings({ liveBudget: n !== undefined && Number.isFinite(n) && n > 0 ? n : undefined });
+          }}
+        />
       </Card>
       <Card>
         <h2>{t("prices")}</h2>

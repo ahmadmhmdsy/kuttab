@@ -20,6 +20,8 @@ export interface CatalogModel {
   note?: string;
   /** false when the model cannot call tools; the tutor then answers in plain chat. */
   tools?: false;
+  /** Download size in GB, for local models. */
+  gb?: number;
 }
 
 export const CATALOG: CatalogModel[] = [
@@ -33,12 +35,13 @@ export const CATALOG: CatalogModel[] = [
   { provider: "google", model: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash Lite", roles: ["teacher", "grader"], size: "medium", arabic: "good", note: "Cheapest Gemini; has a free tier" },
   { provider: "opencode-go", model: "longcat-2.5-preview-free", label: "LongCat 2.5 preview (free)", roles: ["teacher", "grader"], size: "large", arabic: "fair", priceIn: 0, priceOut: 0, note: "Free while in preview" },
   { provider: "opencode-go", model: "beam-free", label: "Beam (free)", roles: ["teacher", "grader"], size: "medium", arabic: "fair", priceIn: 0, priceOut: 0, note: "Free" },
-  { provider: "ollama", model: "qwen3:8b", label: "Qwen3 8B (local)", roles: ["teacher", "grader"], size: "small", arabic: "fair", note: "About 5 GB download; best local all-rounder" },
-  { provider: "ollama", model: "llama3.2", label: "Llama 3.2 3B (local)", roles: ["grader"], size: "small", arabic: "weak", tools: false, note: "About 2 GB; English grading on low-end machines" },
-  { provider: "ollama", model: "gemma3:4b", label: "Gemma 3 4B (local)", roles: ["teacher", "grader"], size: "small", arabic: "fair", note: "About 3 GB" },
-  { provider: "ollama", model: "bge-m3", label: "BGE-M3 embeddings (local)", roles: ["embedder"], size: "small", arabic: "good", note: "Multilingual; about 1.2 GB" },
-  { provider: "ollama", model: "nomic-embed-text", label: "nomic-embed-text (local)", roles: ["embedder"], size: "small", arabic: "weak", note: "About 270 MB; English only" },
-  { provider: "webllm", model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Qwen2.5 1.5B (in-browser)", roles: ["grader"], size: "small", arabic: "fair", tools: false, note: "Needs WebGPU; about 1 GB cached by the app" },
+  { provider: "ollama", model: "qwen3:14b", label: "Qwen3 14B (local)", roles: ["teacher", "grader"], size: "medium", arabic: "good", gb: 9.3, note: "About 9 GB; needs 16 GB of memory or more" },
+  { provider: "ollama", model: "qwen3:8b", label: "Qwen3 8B (local)", roles: ["teacher", "grader"], size: "small", arabic: "fair", gb: 5.2, note: "About 5 GB download; best local all-rounder" },
+  { provider: "ollama", model: "llama3.2", label: "Llama 3.2 3B (local)", roles: ["grader"], size: "small", arabic: "weak", tools: false, gb: 2, note: "About 2 GB; English grading on low-end machines" },
+  { provider: "ollama", model: "gemma3:4b", label: "Gemma 3 4B (local)", roles: ["teacher", "grader"], size: "small", arabic: "fair", gb: 3.3, note: "About 3 GB" },
+  { provider: "ollama", model: "bge-m3", label: "BGE-M3 embeddings (local)", roles: ["embedder"], size: "small", arabic: "good", gb: 1.2, note: "Multilingual; about 1.2 GB" },
+  { provider: "ollama", model: "nomic-embed-text", label: "nomic-embed-text (local)", roles: ["embedder"], size: "small", arabic: "weak", gb: 0.27, note: "About 270 MB; English only" },
+  { provider: "webllm", model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Qwen2.5 1.5B (in-browser)", roles: ["grader"], size: "small", arabic: "fair", tools: false, gb: 1, note: "Needs WebGPU; about 1 GB cached by the app" },
 ];
 
 /** Unknown models are assumed to call tools; the tutor falls back to plain chat if a call fails. */

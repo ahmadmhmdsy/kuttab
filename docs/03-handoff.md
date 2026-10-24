@@ -33,6 +33,23 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T16:00:00+03:00 — T-26 done: a live session on a local model with no network
+
+- **State:** with the learner's OK, Ollama 0.40.10 is installed (winget) and `llama3.2` (2.0 GB) is pulled; it runs fully on the GPU. T-26 is done but not committed (T-25 is `ace5b21`).
+- **Verified:** Tauri over CDP, teacher and local set to ollama:llama3.2, with in-app fetch and WebSocket blocked for every non-loopback host. Live mode: 7 calls, all to `localhost:11434/v1/chat/completions`, 0 sockets; the webview loaded only localhost:1420 and ipc.localhost; header showed $0.0000 · 9,571 tokens; a typed answer was graded by llama3.2. Afterwards the OS listed no Google connection from the app's processes (the one left, 40.104.205.2, belongs to the WebView2 runtime). Low mode: one call wrote the whole script and the session read the beats up to "دورك".
+- **Gotcha:** the first run was not local: the T-25 voice setting (Gemini Live realtime, always listening) taught the session over a WebSocket. A local session needs the voice on the system voice or Piper; the app does not switch it by itself yet.
+- **Unverified / open:** the network adapter was not turned off (a system setting); offline was shown by blocking in-app and checking the OS. llama3.2 teaches poorly (repeated questions, a board titled "3."), so a larger model is advised for real use. The 20 s slow-model notice did not fire (fast GPU). The budget switch was not seen live with a cloud model.
+- **Settings:** restored after the test — teacher back to google:gemini-flash-lite-latest, voice back to Gemini realtime / always / Egyptian, live mode "live"; local fallback left at ollama:llama3.2.
+- **Next:** decide whether a local session should force a local voice; then T-27.
+
+## 2026-10-24T15:00:00+03:00 — T-26 built, blocked on a local model: local mode
+
+- **State:** T-25 is committed as `ace5b21`. T-26 is built and tested but not committed. Its pass (a full live session with the network off) needs Ollama and a model on this machine, which the learner has not agreed to download yet.
+- **Did:** gateway `local.ts`: `recommendLocal` (RAM tier, a model may take half the memory, embedder, Whisper size, low-compute flag, download size against free disk), `detectLocalServers`, `isLocalModel`, `hfToOllama` (HF links become `hf.co/user/repo[:quant]`), `hfGgufFiles` (sizes before pulling), `ollamaModels`, `pullOllama` (NDJSON progress); catalog gets `gb` and Qwen3 14B. Engine `local.ts`: `budgetCtx` (per-session USD limit; at the limit it swaps in the local model, or fences the cloud models with `BudgetSpentError` when there is none) and `scriptBrain` (low-compute: one call writes the section, beats are read in order; only questions and free answers call the model). Desktop: Rust `hardware` command (sysinfo: RAM, cores, free disk of the home drive); `local.ts` adds WebGPU; settings `local`, `liveBudget`, `liveMode`; a new Settings tab "Local models" (hardware check, servers, installed Ollama models, HF link with sizes and a confirmed pull, fallback model, live mode); a budget field in Usage; `LiveView` uses `liveCtx` (budget only for cloud teachers) and `scriptBrain` in low mode, and suggests low mode when a local model takes over 20 s to start. en/ar strings.
+- **Verified:** tsc clean; vitest 114/114. Tauri over CDP: the hardware check, the plan text, the HF file list for bartowski/Llama-3.2-1B-Instruct-GGUF, and "no local server" all render.
+- **Unverified / open:** no live session has run on a local model, the budget switch has not been seen live, and low mode has not been heard live. The advice is based on RAM only and ignores GPU memory (this machine has a 6 GB Quadro RTX 3000, so Qwen3 14B would run mostly on the CPU). transformers.js linking is not built; the in-browser route is still WebLLM.
+- **Next:** with the learner's OK, install Ollama, pull a small model (e.g. `llama3.2`, 2 GB), turn the network off and run a live session to close T-26; otherwise T-27.
+
 ## 2026-10-24T14:30:00+03:00 — T-25 done: voice options
 
 - **State:** the learner picks who speaks (system voice, Piper on this machine, or a provider's realtime voice), how the mic listens (hold to talk, or always listening), and, in Arabic, MSA or a dialect. T-24 is committed as `3071bb4`; T-25 is not committed.

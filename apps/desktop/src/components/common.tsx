@@ -22,7 +22,7 @@ export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => v
   return (
     <div className="error" role="alert">
       <strong>{t("error")}</strong>
-      <p>{msg === "no-model" ? t("needsModel") : msg}</p>
+      <p>{msg === "no-model" ? t("needsModel") : msg === "budget-spent" ? t("budgetNone") : msg}</p>
       <div className="row">
         {msg === "no-model" && <button onClick={() => go({ name: "settings" })}>{t("settings")}</button>}
         {onRetry && <button onClick={onRetry}>{t("retry")}</button>}
