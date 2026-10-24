@@ -1,7 +1,7 @@
 // Courses: the learner's plans, sample packs, new course from a topic, and
 // .kuttab import and export.
 import { useEffect, useState } from "react";
-import { exportPack, generatePlan, indexPack, parsePack, planFromObjectives, planFromPack, planProgress, type Lang, type MasteryMap, type Pack, type Plan } from "@kuttab/engine";
+import { buildTrack, exportPack, indexPack, parsePack, planFromPack, planProgress, type Lang, type MasteryMap, type SourceMix, type Pack, type Plan } from "@kuttab/engine";
 import { useT } from "../i18n.ts";
 import { planLang, refreshCounters, saveKb, services, useStore } from "../state.ts";
 import { kbEmbed, makeCtx } from "../ai.ts";
@@ -180,7 +180,7 @@ function NewCourse({ onCreated }: { onCreated: (planId: string) => void }) {
   const uiLang = useStore((s) => s.settings.uiLang);
   const [topic, setTopic] = useState("");
   const [lang, setLang] = useState<Lang>(profile?.lang ?? uiLang);
-  const [useSources, setUseSources] = useState(false);
+  const [mix, setMix] = useState<SourceMix>("none");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<unknown>();
   const hasSources = services().kb.size > 0;
@@ -191,11 +191,13 @@ function NewCourse({ onCreated }: { onCreated: (planId: string) => void }) {
     try {
       const ctx = await makeCtx();
       const p = { ...(profile ?? { goal: "", level: "new" as const, minutesPerDay: 20, style: "examples-first" as const }), lang };
-      const hits = useSources ? await services().kb.search(topic, 8, await kbEmbed()) : [];
-      const out = await generatePlan(ctx, p, topic.trim(), hits);
-      const plan = { ...planFromObjectives(slug(out.title || topic), out.title || topic, out.objectives), lang, description: topic.trim() };
-      await services().course.savePlan(plan);
-      onCreated(plan.id);
+      const { course, kb } = services();
+      // Web search adapters arrive with T-23; until then "mine then web" builds from the library.
+      const built = await buildTrack(ctx, { topic: topic.trim(), profile: p, mix, kb, embed: await kbEmbed(), makeId: slug });
+      await course.savePlan(built.plan);
+      await course.saveResources(built.pack);
+      if (built.added.length) await saveKb();
+      onCreated(built.plan.id);
     } catch (e) {
       setErr(e);
     } finally {
@@ -225,12 +227,14 @@ function NewCourse({ onCreated }: { onCreated: (planId: string) => void }) {
               <option value="ar">العربية</option>
             </select>
           </label>
-          {hasSources && (
-            <label className="inline">
-              <input type="checkbox" checked={useSources} onChange={(e) => setUseSources(e.target.checked)} disabled={busy} />
-              {t("useSources")}
-            </label>
-          )}
+          <label>
+            {t("sourceMix")}
+            <select value={mix} onChange={(e) => setMix(e.target.value as SourceMix)} disabled={busy}>
+              <option value="none">{t("mixNone")}</option>
+              <option value="mine" disabled={!hasSources}>{t("mixMine")}</option>
+              <option value="mine-then-web">{t("mixWeb")}</option>
+            </select>
+          </label>
         </div>
         <button className="primary" type="submit" disabled={busy || !topic.trim()}>
           {busy ? t("creating") : t("createPlan")}

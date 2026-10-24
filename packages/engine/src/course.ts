@@ -8,6 +8,7 @@ import type { Plan } from "./plan.ts";
 import type { Lesson, LearnerProfile } from "./schema.ts";
 import type { LessonRecord } from "./session.ts";
 import { LearnerMemory } from "./memory.ts";
+import type { ResourcePack } from "./track.ts";
 
 export class Course {
   constructor(private store: KvStore) {}
@@ -38,9 +39,17 @@ export class Course {
   savePlan(p: Plan): Promise<void> {
     return this.store.set(K.plan(p.id), p);
   }
+  /** The track's resource pack: what research found, kept so lessons need no search. */
+  resources(planId: string): Promise<ResourcePack | undefined> {
+    return this.store.get<ResourcePack>(K.resources(planId));
+  }
+  saveResources(p: ResourcePack): Promise<void> {
+    return this.store.set(K.resources(p.planId), p);
+  }
   async deletePlan(id: string): Promise<void> {
     await this.store.delete(K.plan(id));
     await this.store.delete(K.mastery(id));
+    await this.store.delete(K.resources(id));
     for (const k of await this.store.keys(`lessons/${id}/`)) await this.store.delete(k);
     for (const k of await this.store.keys(`live/${id}/`)) await this.store.delete(k);
     for (const c of await this.cards()) if (c.planId === id) await this.store.delete(K.card(c.id));

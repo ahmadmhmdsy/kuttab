@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
-import { kbEmbed, makeCtx } from "../ai.ts";
+import { makeCtx, stepHits } from "../ai.ts";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
 import { BoardItem } from "../components/Board.tsx";
 import { WHISPER_SIZE_MB, canSpeak, sentences, speakAsync, startRecording, stopSpeaking, transcribe, whisperCached, type Recorder } from "../speech.ts";
@@ -52,7 +52,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
     setErr(undefined);
     setSession(undefined);
     void (async () => {
-      const { course, kb } = services();
+      const { course } = services();
       const p = await course.plan(planId);
       if (!p) throw new Error("Course not found");
       const objective = p.items.find((x) => x.id === objectiveId);
@@ -61,7 +61,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
       setPlan(p);
       const lang = planLang(p);
       const lesson = await course.lesson(planId, objectiveId);
-      const hits = kb.size ? await kb.search(`${objective.title} ${objective.summary}`, 5, await kbEmbed()) : [];
+      const hits = await stepHits(planId, objective);
       const material = [
         `${objective.title}\n${objective.summary}`,
         lesson ? lessonPlainText(lesson) : "",

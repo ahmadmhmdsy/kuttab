@@ -1,7 +1,7 @@
 // The learning plan, shown to the learner, who can reorder, rename, skip,
 // remove and add steps.
 import { useEffect, useState } from "react";
-import { addObjective, itemState, moveObjective, nextObjective, planProgress, removeObjective, renameObjective, setStatus, type MasteryMap, type Plan, type PlanItem } from "@kuttab/engine";
+import { addObjective, itemState, moveObjective, nextObjective, planProgress, removeObjective, renameObjective, setStatus, type MasteryMap, type Plan, type PlanItem, type ResourcePack } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { services, useStore } from "../state.ts";
 import { Card, ErrorBox, Spinner } from "../components/common.tsx";
@@ -15,12 +15,14 @@ export function PlanView({ planId }: { planId: string }) {
   const [m, setM] = useState<MasteryMap>({});
   const [editing, setEditing] = useState<string>();
   const [err, setErr] = useState<unknown>();
+  const [pack, setPack] = useState<ResourcePack>();
 
   useEffect(() => {
     const { course } = services();
-    void Promise.all([course.plan(planId), course.mastery(planId)]).then(([p, mm]) => {
+    void Promise.all([course.plan(planId), course.mastery(planId), course.resources(planId)]).then(([p, mm, rp]) => {
       setPlan(p ?? null);
       setM(mm);
+      setPack(rp);
     });
   }, [planId]);
 
@@ -60,6 +62,7 @@ export function PlanView({ planId }: { planId: string }) {
       </button>
       <h1 dir="auto">{plan.title}</h1>
       <p className="muted">{t("planHelp")}</p>
+      {pack && <PackLine pack={pack} />}
       <div className="progress" aria-label={t("progress")}>
         <span style={{ inlineSize: `${pct}%` }} />
       </div>
@@ -241,5 +244,19 @@ function AddStep({ plan, onAdd }: { plan: Plan; onAdd: (o: { id: string; title: 
         </div>
       </form>
     </Card>
+  );
+}
+
+/** What the track was built from; the pack is what lessons read, so it works offline. */
+function PackLine({ pack }: { pack: ResourcePack }) {
+  const t = useT();
+  const all = Object.values(pack.objectives).flat();
+  const sources = new Set(all.map((e) => e.sourceId)).size;
+  const web = new Set(all.filter((e) => e.url).map((e) => e.sourceId)).size;
+  return (
+    <p className="muted small pack-line">
+      {pack.mix === "none" ? t("packNone") : t("packLine", { n: all.length, sources, web })}
+      {pack.webSkipped && <> · {t("webSkipped")}</>}
+    </p>
   );
 }

@@ -33,6 +33,13 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T18:00:00+03:00 — T-22 done: track builder and resource pack
+
+- **State:** a new course is researched once, and the result is kept as a resource pack that every later lesson reads instead of searching. T-21 is committed as `6e091ea`; T-22 is not committed.
+- **Did:** new `packages/engine/src/track.ts`. `SourceMix` (none, mine, mine then web) and `KeepWeb` (pages or notes). `WebAdapter` is an interface only; the real adapters are T-23. `buildTrack` searches the learner's library, goes to the web only when the mix allows and own hits are thin (fewer than 3, or coverage under 0.5), has the model write 2 to 4 queries, fetches up to 6 pages (deduped, one failure does not fail the build), plans from both, and packs up to 4 excerpts per objective. Keep-pages copies the web pages into the library. `webSkipped` is recorded when the web was wanted and no adapter exists. `searchMore` is the mid-track search; it works on any mix and says plainly when no search provider is set up. `packHits` turns a pack into citable hits. Store key `resources/<planId>`; `Course.resources()`/`saveResources()`; deleting a course drops its pack. Desktop: the new-course form has a source-mix select in place of the checkbox. Lessons and Live read the pack through `stepHits` and fall back to a library search for older courses. The plan page shows a line saying what is saved for offline use. New en/ar strings.
+- **Verified:** tsc clean (engine, desktop); vitest 80/80 (4 new in `track.test.ts`, with a fake web and a mock model). Tauri over CDP with the real model: a course built with "mine then web" shows "20 excerpts from 2 sources (1 from the web)". Its first lesson was generated with 0 library searches and cites "Critical thinking reference card" from the pack.
+- **Unverified / open:** no real web research until T-23, so on the desktop "mine then web" builds from the library only. There is no desktop button for a mid-track search yet; it needs an adapter. Excerpts can repeat chunks of the same page. The "from the web" count includes url sources the learner added themselves.
+- **Next:** the next pending task in `docs/04-tasks.md` (T-23, web search adapters).
 ## 2026-10-24T15:00:00+03:00 — T-21 done: live pace, back-to-plan nudges, skills map
 
 - **State:** the live tutor changes pace from the lesson record and steers back to the plan after side questions; a Progress page shows a skills map per course. T-20 is committed as `e4ec14b`; T-21 is not committed.

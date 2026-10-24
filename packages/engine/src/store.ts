@@ -36,6 +36,7 @@ export const K = {
   mastery: (planId: string) => `mastery/${planId}`,
   lesson: (planId: string, objectiveId: string) => `lessons/${planId}/${objectiveId}`,
   live: (planId: string, objectiveId: string) => `live/${planId}/${objectiveId}`,
+  resources: (planId: string) => `resources/${planId}`,
   cards: "cards/",
   card: (id: string) => `cards/${id}`,
   kb: "kb",

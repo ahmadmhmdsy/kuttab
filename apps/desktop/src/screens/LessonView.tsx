@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { generateLesson, lessonNotes, lessonPlainText, nextObjective, tutorAgentReply, type Block, type EvidenceKind, type Lang, type Lesson, type LessonNotes, type Plan } from "@kuttab/engine";
 import { useT } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
-import { errorText, kbEmbed, makeCtx, teacherName, toolHost, tutorTools } from "../ai.ts";
+import { errorText, makeCtx, stepHits, teacherName, toolHost, tutorTools } from "../ai.ts";
 import { BlockView, blockId, isGate } from "../components/BlockView.tsx";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
 import { Markdown } from "../markdown.tsx";
@@ -52,7 +52,7 @@ export function LessonView({ planId, objectiveId }: { planId: string; objectiveI
     setCompleted(new Set());
     setNext(undefined);
     void (async () => {
-      const { course, kb, labs } = services();
+      const { course, labs } = services();
       const p = await course.plan(planId);
       if (!p) throw new Error("Course not found");
       const objective = p.items.find((x) => x.id === objectiveId);
@@ -62,7 +62,7 @@ export function LessonView({ planId, objectiveId }: { planId: string; objectiveI
       const l = await course.lessonOrGenerate(planId, objectiveId, async () => {
         const ctx = await makeCtx();
         const profile = { ...(useStore.getState().profile ?? { goal: "", level: "new" as const, minutesPerDay: 20, style: "examples-first" as const }), lang };
-        const hits = kb.size ? await kb.search(`${objective.title} ${objective.summary}`, 5, await kbEmbed()) : [];
+        const hits = await stepHits(planId, objective);
         return generateLesson(ctx, { planId, objective, profile, lang, hits, labs, modelName: teacherName() });
       });
       if (live) setLesson(l);

@@ -1,8 +1,8 @@
 // Builds engine contexts from the learner's model settings. Keys come from the
 // secret store at call time and are never kept in app state, logged or exported.
 import { embedMany, generateText } from "ai";
-import { TEACHER_TOOLS, addFacts, type Ctx, type TeacherTool, type ToolHost } from "@kuttab/engine";
-import type { Embed } from "@kuttab/kb";
+import { TEACHER_TOOLS, addFacts, objectiveQuery, packHits, type Ctx, type Objective, type TeacherTool, type ToolHost } from "@kuttab/engine";
+import type { Embed, Hit } from "@kuttab/kb";
 import { createEmbedder, createModel, estimateCost, listModels, providerInfo, supportsTools, type FetchFn } from "@kuttab/llm-gateway";
 import { webLlmFetch } from "./platform/webllm.ts";
 import { addUsage, modelKey, services, useStore, type ModelChoice } from "./state.ts";
@@ -96,6 +96,14 @@ export async function embedFn(): Promise<Embed | undefined> {
  * different models cannot be compared, so on a mismatch this returns
  * undefined and search falls back to keywords.
  */
+/** Material for one step: the track's stored resource pack when it has one (no search), else a library search. */
+export async function stepHits(planId: string, objective: Objective): Promise<Hit[]> {
+  const { course, kb } = services();
+  const pack = await course.resources(planId);
+  if (pack?.objectives[objective.id]) return packHits(pack, objective.id);
+  return kb.size ? kb.search(objectiveQuery(objective), 5, await kbEmbed()) : [];
+}
+
 export async function kbEmbed(): Promise<Embed | undefined> {
   const s = services();
   const key = embedderKey();
