@@ -33,6 +33,13 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T15:00:00+03:00 — T-21 done: live pace, back-to-plan nudges, skills map
+
+- **State:** the live tutor changes pace from the lesson record and steers back to the plan after side questions; a Progress page shows a skills map per course. T-20 is committed as `e4ec14b`; T-21 is not committed.
+- **Did:** new `packages/engine/src/adapt.ts`: `paceSignals` (first try per check, missed and right runs, side questions since the lesson last moved on, optional level), `paceFor` (2 missed in a row → slower, 3 right first time → faster; before any check, an earlier mastery score ≥ 0.6 → faster, under 0.3 → slower), `offPlan` (3 side questions), `paceRule` and `backToPlanRule`. `llmBrain` takes `level`; `nextBeat` adds the pace line, `reply` adds the back-to-plan line. Desktop: `LiveView` passes the objective's mastery score as `level` and shows a pace chip in the header when not steady. New `screens/Progress.tsx` (route `progress`, in the nav after Library): one card per course with a progress bar and a tile per step (state, score meter); a tile opens the plan. New en/ar strings.
+- **Verified:** tsc clean (engine, desktop); vitest 76/76 (5 new in `adapt.test.ts`, including the prompts the model gets). Tauri over CDP: the Progress page shows the 4 courses with the right states and scores; opening Live on "Claims and evidence" (25%) shows "يبطئ الشرح"; the Arabic course at 0% shows no chip.
+- **Unverified / open:** no real-model check that the tutor actually slows down or steers back; only the prompts are tested. Goals and dates pacing (decision 0002 item 20) is not done. A replayed paused reply's `say` could count as the lesson moving on.
+- **Next:** the next pending task in `docs/04-tasks.md`.
 ## 2026-10-24T13:10:00+03:00 — T-20 done: learner memory and "What the tutor knows about me"
 
 - **State:** the tutor keeps short facts about the learner on the device, learns more after each live session, reads them at the start of each session, and shows them on an editable page. Nothing committed since `bf3595b`.

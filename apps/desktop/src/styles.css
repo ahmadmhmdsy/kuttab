@@ -470,6 +470,59 @@ header .status {
   font-family: var(--mono);
 }
 
+/* ---------- Skills map ---------- */
+
+ul.skill-map {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.5rem;
+}
+.skill {
+  inline-size: 100%;
+  block-size: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.3em;
+  text-align: start;
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.7rem;
+}
+.skill.available {
+  border-inline-start-color: var(--primary);
+}
+.skill.mastered {
+  border-inline-start-color: var(--ok);
+  background: var(--ok-soft);
+}
+.skill.skipped,
+.skill.locked {
+  opacity: 0.65;
+}
+.skill-meter {
+  display: block;
+  block-size: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.skill-meter span {
+  display: block;
+  block-size: 100%;
+  background: var(--primary);
+}
+.skill.mastered .skill-meter span {
+  background: var(--ok);
+}
+.badge.live-pace {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
 /* ---------- Plan ---------- */
 
 ol.steps {

@@ -80,7 +80,8 @@ export type Route =
   | { name: "sources" }
   | { name: "playground" }
   | { name: "settings" }
-  | { name: "memory" };
+  | { name: "memory" }
+  | { name: "progress" };
 
 interface AppState {
   ready: boolean;

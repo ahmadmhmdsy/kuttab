@@ -11,3 +11,4 @@ export * from "./course.ts";
 export * from "./tools.ts";
 export * from "./session.ts";
 export * from "./memory.ts";
+export * from "./adapt.ts";

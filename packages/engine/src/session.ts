@@ -8,6 +8,7 @@
 import { z } from "zod";
 import { languageRule, structured, type Ctx } from "./llm.ts";
 import type { Lang } from "./schema.ts";
+import { backToPlanRule, paceRule, paceSignals } from "./adapt.ts";
 
 export const BoardKind = z.enum(["text", "slide", "diagram", "chart", "math", "image", "animation", "lab", "clear"]);
 export type BoardKind = z.infer<typeof BoardKind>;
@@ -491,6 +492,8 @@ export interface LlmBrainOptions {
   maxBeats?: number;
   /** What the tutor knows about the learner (memoryText), read at session start. */
   learner?: string;
+  /** Mastery score of this objective from earlier sessions; sets the opening pace. */
+  level?: number;
 }
 
 const NextBeat = z.object({
@@ -519,13 +522,15 @@ ${opts.learner}` : ""}`;
   return {
     async nextBeat(rec) {
       if (opts.maxBeats !== undefined && taught >= opts.maxBeats) return null;
-      const r = await structured(ctx, "teacher", "live beat", NextBeat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec) || "(nothing yet — open the lesson)"}\n\nGive the next beat, or done=true if finished.`);
+      const pace = paceRule(paceSignals(rec, opts.level));
+      const r = await structured(ctx, "teacher", "live beat", NextBeat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec) || "(nothing yet — open the lesson)"}\n\n${pace ? `${pace}\n\n` : ""}Give the next beat, or done=true if finished.`);
       if (r.done || !r.beat) return null;
       taught++;
       return r.beat;
     },
     async reply(rec, q) {
-      return structured(ctx, "teacher", "live reply", Beat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec)}\n\nThe learner just interrupted: "${q}". Answer it briefly as one beat, then the lesson goes on.`);
+      const back = backToPlanRule(paceSignals(rec));
+      return structured(ctx, "teacher", "live reply", Beat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec)}\n\nThe learner just interrupted: "${q}". Answer it briefly as one beat, then the lesson goes on.${back ? `\n\n${back}` : ""}`);
     },
     async grade(_rec, check, answer) {
       return structured(

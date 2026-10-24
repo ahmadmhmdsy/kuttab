@@ -1,7 +1,7 @@
 // Live lesson, Chat mode: the tutor leads, speaks each sentence as it goes, and
 // draws on a board with history. Built on the engine's LiveSession.
 import { useEffect, useRef, useState } from "react";
-import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
+import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
 import { kbEmbed, makeCtx } from "../ai.ts";
@@ -38,6 +38,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const [readAloud, setReadAloud] = useState(tts && canSpeak());
   const [mode, setMode] = useState<Mode>("chat");
   const [learnt, setLearnt] = useState(false);
+  const [level, setLevel] = useState<number>();
   const readRef = useRef(readAloud);
   // Voice mode always speaks; the checkbox only governs Chat mode.
   readRef.current = readAloud || mode === "voice";
@@ -66,7 +67,9 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
         lesson ? lessonPlainText(lesson) : "",
         ...hits.map((h) => `[${h.source.title}] ${h.chunk.text}`),
       ].filter(Boolean).join("\n\n");
-      const brain = llmBrain(await makeCtx(abort.signal), lang, { material, learner: memoryText(await course.memory(), planId) || undefined });
+      const known = (await course.mastery(planId))[objectiveId]?.score;
+      setLevel(known);
+      const brain = llmBrain(await makeCtx(abort.signal), lang, { material, learner: memoryText(await course.memory(), planId) || undefined, level: known });
       const speaker: Speaker = {
         async speak(text, signal) {
           const parts = sentences(text);
@@ -125,6 +128,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const entries = session?.record.entries ?? [];
   const boards = session ? boardHistory(session.record) : [];
   const shown = picked ?? boards.length - 1;
+  const pace = session && state !== "done" ? paceFor(paceSignals(session.record, level)) : "steady";
   const lastSay = [...entries].reverse().find((e) => e.kind === "say");
   const pendingSay = current && !(lastSay?.kind === "say" && lastSay.text === current.text && lastSay.beat === current.beat) ? current : undefined;
 
@@ -157,6 +161,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
           </ol>
         )}
         {STATE_LABEL[state] && <span className="badge live-state">{t(STATE_LABEL[state]!)}</span>}
+        {pace !== "steady" && <span className="badge live-pace" title={t("paceWhy")}>{t(pace === "slower" ? "paceSlower" : "paceFaster")}</span>}
         <div className="seg live-mode" role="group">
           {(["chat", "voice"] as const).map((m) => (
             <button key={m} className={mode === m ? "on" : undefined} aria-pressed={mode === m} onClick={() => setMode(m)}>

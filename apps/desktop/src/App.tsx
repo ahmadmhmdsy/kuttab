@@ -12,9 +12,11 @@ import { Sources } from "./screens/Sources.tsx";
 import { Playground } from "./screens/Playground.tsx";
 import { Settings, UsageText } from "./screens/Settings.tsx";
 import { Memory } from "./screens/Memory.tsx";
+import { Progress } from "./screens/Progress.tsx";
 
 const NAV: { name: Route["name"]; label: StrKey }[] = [
   { name: "library", label: "library" },
+  { name: "progress", label: "progress" },
   { name: "review", label: "review" },
   { name: "sources", label: "sources" },
   { name: "playground", label: "playground" },
@@ -41,6 +43,8 @@ function Screen({ route }: { route: Route }) {
       return <Settings />;
     case "memory":
       return <Memory />;
+    case "progress":
+      return <Progress />;
   }
 }
 
