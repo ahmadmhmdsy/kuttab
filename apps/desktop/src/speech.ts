@@ -1,6 +1,6 @@
 // Speech: text-to-speech through the system voices, and speech input through a
 // local Whisper model (transformers.js). Audio never leaves the machine.
-import type { Lang } from "@kuttab/engine";
+import type { Dialect, Lang } from "@kuttab/engine";
 import type { WhisperSize } from "./state.ts";
 
 // ---------- TTS ----------
@@ -9,9 +9,15 @@ export function canSpeak(): boolean {
   return typeof speechSynthesis !== "undefined";
 }
 
-function voiceFor(lang: Lang): SpeechSynthesisVoice | undefined {
+/** A BCP-47 tag per spoken Arabic, so the system picks a matching regional voice when it has one. */
+export const DIALECT_TAG: Record<Dialect, string> = { msa: "ar-SA", egyptian: "ar-EG", gulf: "ar-AE", levantine: "ar-JO", maghrebi: "ar-MA" };
+
+export const langTag = (lang: Lang, dialect?: Dialect) => (lang === "ar" ? DIALECT_TAG[dialect ?? "msa"] : "en-US");
+
+function voiceFor(lang: Lang, dialect?: Dialect): SpeechSynthesisVoice | undefined {
   const voices = speechSynthesis.getVoices();
-  return voices.find((v) => v.lang.toLowerCase().startsWith(lang)) ?? undefined;
+  const tag = langTag(lang, dialect).toLowerCase();
+  return voices.find((v) => v.lang.toLowerCase().replace("_", "-") === tag) ?? voices.find((v) => v.lang.toLowerCase().startsWith(lang)) ?? undefined;
 }
 
 export function speak(text: string, lang: Lang, onEnd?: () => void): void {
@@ -36,7 +42,7 @@ export function sentences(text: string): string[] {
 }
 
 /** Speaks one sentence; resolves when it ends or the signal aborts (which stops the voice). */
-export function speakAsync(text: string, lang: Lang, signal: AbortSignal): Promise<void> {
+export function speakAsync(text: string, lang: Lang, signal: AbortSignal, dialect?: Dialect): Promise<void> {
   if (!canSpeak() || signal.aborted) return Promise.resolve();
   return new Promise((resolve) => {
     const done = () => {
@@ -49,8 +55,8 @@ export function speakAsync(text: string, lang: Lang, signal: AbortSignal): Promi
     };
     signal.addEventListener("abort", stop, { once: true });
     const u = new SpeechSynthesisUtterance(text.replace(/[#*_`>[\]()]/g, ""));
-    u.lang = lang === "ar" ? "ar-SA" : "en-US";
-    const v = voiceFor(lang);
+    u.lang = langTag(lang, dialect);
+    const v = voiceFor(lang, dialect);
     if (v) u.voice = v;
     u.onend = done;
     u.onerror = done;
@@ -112,6 +118,12 @@ async function decode16k(blob: Blob): Promise<Float32Array> {
 
 export async function transcribe(blob: Blob, size: WhisperSize, lang: Lang): Promise<string> {
   const [asr, audio] = await Promise.all([loadWhisper(size), decode16k(blob)]);
+  return transcribePcm(audio, size, lang, asr);
+}
+
+/** Whisper on 16 kHz mono samples, as the always-listening mic hands them over. */
+export async function transcribePcm(audio: Float32Array, size: WhisperSize, lang: Lang, asr?: Asr): Promise<string> {
+  asr ??= await loadWhisper(size);
   const out = await asr(audio, { language: lang === "ar" ? "arabic" : "english", task: "transcribe", chunk_length_s: 30 });
   return (Array.isArray(out) ? out.map((o) => o.text).join(" ") : out.text).trim();
 }

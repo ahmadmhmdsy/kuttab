@@ -21,6 +21,23 @@ export interface Ctx {
 
 export const LANG_NAME: Record<Lang, string> = { en: "English", ar: "Modern Standard Arabic" };
 
+/** Spoken Arabic the learner chose for the tutor's voice (decision 0002). */
+export type Dialect = "msa" | "egyptian" | "gulf" | "levantine" | "maghrebi";
+
+export const DIALECT_NAME: Record<Dialect, string> = {
+  msa: "Modern Standard Arabic",
+  egyptian: "Egyptian",
+  gulf: "Gulf",
+  levantine: "Levantine",
+  maghrebi: "Maghrebi (Moroccan)",
+};
+
+/** Empty unless the lesson is in Arabic and the learner picked a spoken dialect. */
+export function dialectRule(lang: Lang, dialect?: Dialect): string {
+  if (lang !== "ar" || !dialect || dialect === "msa") return "";
+  return ` Speak the "say" lines in everyday ${DIALECT_NAME[dialect]} Arabic, written in Arabic script, as a friendly ${DIALECT_NAME[dialect]} teacher would talk. Keep the board, checks, choices and feedback in Modern Standard Arabic.`;
+}
+
 export function languageRule(lang: Lang): string {
   return lang === "ar"
     ? "Write every learner-facing string in Modern Standard Arabic. Keep code, SQL keywords, identifiers and program output in English/ASCII exactly as they must be typed."

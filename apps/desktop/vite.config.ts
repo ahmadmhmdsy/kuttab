@@ -43,6 +43,8 @@ function localAssets(mount: string, dir: string, keep: RegExp): Plugin {
 const pyodideDir = pkgDir("pyodide");
 // onnxruntime-web exports no package.json, so locate dist/ from its entry point.
 const ortDir = dirname(createRequire(require.resolve("@huggingface/transformers")).resolve("onnxruntime-web"));
+// Piper's phonemizer (T-25): its JS is bundled into piper-tts-web; the data and wasm load at run time.
+const piperDir = join(pkgDir("@diffusionstudio/piper-wasm"), "build");
 
 // The Tauri CSP is the single source of truth. KUTTAB_CSP=1 applies it to
 // `vite dev` / `vite preview` too, so it can be checked in a plain browser.
@@ -55,9 +57,10 @@ export default defineConfig({
     react(),
     localAssets("pyodide", pyodideDir, /\.(wasm|zip|json|mjs|js)$/),
     localAssets("ort", ortDir, /^ort-wasm-simd-threaded(\.asyncify)?\.(mjs|wasm)$/),
+    localAssets("piper", piperDir, /^piper_phonemize\.(data|wasm)$/),
   ],
   clearScreen: false,
-  optimizeDeps: { exclude: ["pyodide", "@huggingface/transformers", "@mlc-ai/web-llm"] },
+  optimizeDeps: { exclude: ["pyodide", "@huggingface/transformers", "@mlc-ai/web-llm", "@mintplex-labs/piper-tts-web"] },
   worker: { format: "es" },
   build: { target: "es2022", chunkSizeWarningLimit: 4000 },
   server: {

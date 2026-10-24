@@ -7,7 +7,10 @@ import { planLang, refreshCounters, services, useStore } from "../state.ts";
 import { makeCtx, stepHits } from "../ai.ts";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
 import { BoardItem } from "../components/Board.tsx";
-import { WHISPER_SIZE_MB, canSpeak, sentences, speakAsync, startRecording, stopSpeaking, transcribe, whisperCached, type Recorder } from "../speech.ts";
+import { WHISPER_SIZE_MB, canSpeak, sentences, stopSpeaking, whisperCached } from "../speech.ts";
+import { MIC_RATE, openMic, type Mic } from "../mic.ts";
+import { Vad, concat } from "../vad.ts";
+import { sessionVoice, type SessionVoice } from "../voice.ts";
 
 type Mode = "chat" | "voice";
 
@@ -32,6 +35,8 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const [attempt, setAttempt] = useState(0);
   const [, setTick] = useState(0);
   const [current, setCurrent] = useState<{ text: string; beat: number }>();
+  // The tutor's spoken feedback on an answer, captioned while it is read.
+  const [feedback, setFeedback] = useState<string>();
   const [sentence, setSentence] = useState(-1);
   const [picked, setPicked] = useState<number>();
   const [input, setInput] = useState("");
@@ -39,6 +44,9 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const [mode, setMode] = useState<Mode>("chat");
   const [learnt, setLearnt] = useState(false);
   const [level, setLevel] = useState<number>();
+  const [voice, setVoice] = useState<SessionVoice>();
+  const [notice, setNotice] = useState<string>();
+  const listen = useStore((s) => s.settings.voice.listen);
   const readRef = useRef(readAloud);
   // Voice mode always speaks; the checkbox only governs Chat mode.
   readRef.current = readAloud || mode === "voice";
@@ -48,8 +56,10 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
     let live = true;
     const abort = new AbortController();
     let s: LiveSession | undefined;
+    let sv: SessionVoice | undefined;
     let learned = false;
     setErr(undefined);
+    setNotice(undefined);
     setSession(undefined);
     void (async () => {
       const { course } = services();
@@ -69,23 +79,40 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
       ].filter(Boolean).join("\n\n");
       const known = (await course.mastery(planId))[objectiveId]?.score;
       setLevel(known);
-      const brain = llmBrain(await makeCtx(abort.signal), lang, { material, learner: memoryText(await course.memory(), planId) || undefined, level: known });
+      const { voice: vs, whisper } = useStore.getState().settings;
+      const brain = llmBrain(await makeCtx(abort.signal), lang, {
+        material,
+        learner: memoryText(await course.memory(), planId) || undefined,
+        level: known,
+        dialect: lang === "ar" ? vs.dialect : undefined,
+      });
       const speaker: Speaker = {
         async speak(text, signal) {
           const parts = sentences(text);
           for (let i = 0; i < parts.length && !signal.aborted; i++) {
             setSentence(i);
-            await (readRef.current ? speakAsync(parts[i]!, lang, signal) : readPause(parts[i]!, signal));
+            if (readRef.current && parts[i + 1]) sv?.next(parts[i + 1]!);
+            await (readRef.current && sv ? sv.speak(parts[i]!, signal) : readPause(parts[i]!, signal));
           }
           setSentence(-1);
         },
       };
       const saved = await course.liveRecord(planId, objectiveId);
       if (!live) return;
+      sv = await sessionVoice(vs, lang, whisper, {
+        confirm: (mb) => confirm(t("piperConfirm", { size: String(mb) })),
+        onFallback: (e) => live && setNotice(t("voiceFallback", { msg: String((e as Error)?.message ?? e) })),
+      });
+      if (!live) return sv.close();
+      setVoice(sv);
       s = new LiveSession({ brain, speaker, lang, title: objective.title, objectiveId, trackId: planId, record: saved && !saved.endedAt ? saved : undefined });
       s.on((e) => {
-        if (e.type === "say") setCurrent({ text: e.text, beat: e.beat });
+        if (e.type === "say") {
+          setCurrent({ text: e.text, beat: e.beat });
+          setFeedback(undefined);
+        }
         if (e.type === "board") setPicked(undefined);
+        if (e.type === "graded") setFeedback(e.feedback || undefined);
         if (e.type === "graded") void course.record(planId, objectiveId, "check", e.correct).then(refreshCounters);
         if (e.type === "error") setErr(e.error);
         if (e.type === "state") void course.saveLiveRecord(planId, objectiveId, s!.record);
@@ -110,13 +137,18 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
         if (s.state !== "done") s.pause();
         void services().course.saveLiveRecord(planId, objectiveId, s.record);
       }
+      sv?.close();
+      setVoice(undefined);
       stopSpeaking();
     };
   }, [planId, objectiveId, attempt]);
 
   useEffect(() => {
-    if (!readRef.current) stopSpeaking();
-  }, [readAloud, mode]);
+    if (!readRef.current) {
+      voice?.stop();
+      stopSpeaking();
+    }
+  }, [readAloud, mode, voice]);
 
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ block: "end" });
@@ -131,6 +163,7 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   const pace = session && state !== "done" ? paceFor(paceSignals(session.record, level)) : "steady";
   const lastSay = [...entries].reverse().find((e) => e.kind === "say");
   const pendingSay = current && !(lastSay?.kind === "say" && lastSay.text === current.text && lastSay.beat === current.beat) ? current : undefined;
+  const spokenNow = state === "speaking" ? (feedback ?? pendingSay?.text) : undefined;
 
   // Typed text answers a waiting check; anything else is a question that cuts in.
   const send = (text: string, asQuestion = false) => {
@@ -176,12 +209,15 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
 
       <div className="live-split">
         <section className="live-tutor">
-          {mode === "voice" && session && state !== "done" ? (
+          {notice && <p className="live-note">{notice}</p>}
+          {mode === "voice" && session && voice && state !== "done" ? (
             <VoicePanel
               session={session}
+              voice={voice}
+              listen={listen}
               state={state}
               lang={lang}
-              caption={pendingSay && state === "speaking" ? (sentences(pendingSay.text)[sentence] ?? pendingSay.text) : (check?.question ?? lastSay?.text ?? "")}
+              caption={spokenNow ? (sentences(spokenNow)[sentence] ?? spokenNow) : (check?.question ?? lastSay?.text ?? "")}
               choices={check?.choices ?? []}
               onChoice={send}
               onError={setErr}
@@ -327,63 +363,130 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
   );
 }
 
-/** Voice mode: an orb that shows the tutor's state, a caption, and hold-to-talk. */
-function VoicePanel(props: { session: LiveSession; state: SessionState; lang: Lang; caption: string; choices: string[]; onChoice: (c: string) => void; onError: (e: unknown) => void }) {
-  const { session, state, lang, caption, choices, onChoice, onError } = props;
+/** Voice mode: an orb that shows the tutor's state, a caption, and hold-to-talk (plus always-listening when chosen). */
+function VoicePanel(props: {
+  session: LiveSession;
+  voice: SessionVoice;
+  listen: "hold" | "always";
+  state: SessionState;
+  lang: Lang;
+  caption: string;
+  choices: string[];
+  onChoice: (c: string) => void;
+  onError: (e: unknown) => void;
+}) {
+  const { session, voice, listen, state, caption, choices, onChoice, onError } = props;
   const t = useT();
   const size = useStore((s) => s.settings.whisper);
   const [phase, setPhase] = useState<"" | "listening" | "transcribing">("");
+  const [hearing, setHearing] = useState(false);
+  const [always, setAlways] = useState(false);
   const held = useRef(false);
-  const rec = useRef<Promise<Recorder> | null>(null);
+  const frames = useRef<Float32Array[]>([]);
+  const mic = useRef<Promise<Mic> | null>(null);
+  const vad = useRef<Vad | null>(null);
   const paused = useRef(false);
   const asking = useRef(false);
-  if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices) return <p className="muted live-orbwrap">{t("noMic")}</p>;
+  const noMic = !navigator.mediaDevices?.getUserMedia;
+  const onFrame = (f: Float32Array) => (held.current ? frames.current.push(f) : vad.current?.push(f));
+  const whisperOk = () => !voice.usesWhisper || whisperCached(size) || confirm(t("whisperConfirm", { size: `${WHISPER_SIZE_MB[size]} MB` }));
 
-  // Pressing stops the tutor mid-sentence; releasing sends what was said.
-  const press = (ask: boolean) => {
-    if (held.current || phase === "transcribing") return;
-    asking.current = ask;
-    if (!whisperCached(size) && !confirm(t("whisperConfirm", { size: `${WHISPER_SIZE_MB[size]} MB` }))) return;
-    held.current = true;
-    stopSpeaking();
-    paused.current = state === "speaking" || state === "thinking";
-    if (paused.current) session.pause();
-    setPhase("listening");
-    rec.current = startRecording();
-    rec.current.catch((e) => {
-      held.current = false;
-      rec.current = null;
-      setPhase("");
-      onError(e);
-      if (paused.current) void session.resume().catch(onError);
-    });
-  };
-  const release = async () => {
-    if (!held.current) return;
-    held.current = false;
-    const r = rec.current;
-    rec.current = null;
-    if (!r) return;
+  // Heard speech answers a waiting check; anything else is a question that cuts in.
+  const hear = async (audio: Float32Array, ask: boolean) => {
     setPhase("transcribing");
     let text = "";
     try {
-      text = await transcribe(await (await r).stop(), size, lang);
+      // A tap shorter than a fifth of a second holds no words.
+      if (audio.length > MIC_RATE / 5) text = await voice.hear(audio);
     } catch (e) {
       onError(e);
     }
     setPhase("");
     if (!text) {
       if (paused.current) void session.resume().catch(onError);
-    } else if (!asking.current && session.awaiting && session.state === "awaiting_answer") void session.answer(text).catch(onError);
+    } else if (!ask && session.awaiting && session.state === "awaiting_answer") void session.answer(text).catch(onError);
     else void session.interrupt(text).catch(onError);
+    paused.current = false;
   };
 
-  const look = phase === "listening" ? "listening" : phase || state === "thinking" ? "thinking" : state === "speaking" ? "speaking" : "idle";
+  // Always-listening: the mic stays open and the VAD cuts it into utterances.
+  useEffect(() => {
+    if (listen !== "always" || noMic || !whisperOk()) return;
+    const v = new Vad(
+      (audio) => {
+        setHearing(false);
+        void hear(audio, false);
+      },
+      () => setHearing(true),
+    );
+    vad.current = v;
+    const m = openMic(onFrame);
+    mic.current = m;
+    m.then(() => setAlways(true)).catch(onError);
+    return () => {
+      vad.current = null;
+      mic.current = null;
+      setAlways(false);
+      setHearing(false);
+      void m.then((x) => x.close()).catch(() => undefined);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listen, voice, noMic]);
+
+  // Echo handling: the VAD ignores the room while the tutor talks or thinks, and while an answer is read.
+  useEffect(() => {
+    vad.current?.setMuted(state === "speaking" || state === "thinking" || phase !== "");
+    if (state === "speaking" || phase !== "") setHearing(false);
+  }, [state, phase, always]);
+
+  if (noMic) return <p className="muted live-orbwrap">{t("noMic")}</p>;
+
+  // Pressing stops the tutor mid-sentence; releasing sends what was said.
+  const press = (ask: boolean) => {
+    if (held.current || phase === "transcribing") return;
+    asking.current = ask;
+    if (!whisperOk()) return;
+    held.current = true;
+    frames.current = [];
+    voice.stop();
+    paused.current = state === "speaking" || state === "thinking";
+    if (paused.current) session.pause();
+    setPhase("listening");
+    if (!mic.current) {
+      const m = openMic(onFrame);
+      mic.current = m;
+      m.catch((e) => {
+        held.current = false;
+        mic.current = null;
+        setPhase("");
+        onError(e);
+        if (paused.current) void session.resume().catch(onError);
+      });
+    }
+  };
+  const release = async () => {
+    if (!held.current) return;
+    held.current = false;
+    const audio = concat(frames.current);
+    frames.current = [];
+    // Hold mode opens the mic per press; always mode keeps it.
+    if (listen === "hold" && mic.current) {
+      void mic.current.then((x) => x.close()).catch(() => undefined);
+      mic.current = null;
+    }
+    await hear(audio, asking.current);
+  };
+
+  const listening = phase === "listening" || (phase === "" && hearing);
+  const look = listening ? "listening" : phase || state === "thinking" ? "thinking" : state === "speaking" ? "speaking" : "idle";
   const atCheck = state === "awaiting_answer" && !!session.awaiting;
-  const label: StrKey | undefined = phase === "listening" ? "stListening" : phase ? "transcribing" : STATE_LABEL[state];
+  const label: StrKey | undefined = listening ? "stListening" : phase ? "transcribing" : STATE_LABEL[state];
   return (
     <div className="live-orbwrap">
-      <div className="live-orbstate">{label ? t(label) : ""}</div>
+      <div className="live-orbstate">
+        {label ? t(label) : ""}
+        {always && <span className="badge live-always">{t("listenAlways")}</span>}
+      </div>
       <div className={`live-orb ${look}`} aria-hidden />
       <p className="live-caption" dir="auto" aria-live="polite">
         {caption}

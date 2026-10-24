@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { TEACHER_TOOLS, type ToolName } from "@kuttab/engine";
 import { CATALOG, nativeSearchProvider, PROVIDERS, SEARCH_ENGINES, supportsTools } from "@kuttab/llm-gateway";
 import { applyDocumentLang, useT } from "../i18n.ts";
-import { modelKey, resetUsage, services, useStore, type ModelChoice, type SearchKind, type Settings as AppSettings, type Usage, type WhisperSize } from "../state.ts";
+import { modelKey, resetUsage, services, useStore, type ModelChoice, type SearchKind, type Settings as AppSettings, type Usage, type VoiceSettings, type WhisperSize } from "../state.ts";
 import { errorText, keyId } from "../ai.ts";
 import { BackupError, makeBackup, MAX_BACKUP_BYTES, parseBackup, restoreBackup } from "../backup.ts";
 import { KeyField, ModelPicker } from "../components/ModelPicker.tsx";
@@ -246,6 +246,8 @@ function LearningPanel() {
 function VoicePanel() {
   const t = useT();
   const { settings, updateSettings } = useStore();
+  const v = settings.voice;
+  const setVoice = (p: Partial<VoiceSettings>) => updateSettings({ voice: { ...v, ...p } });
   return (
     <Card>
       <h2>{t("speech")}</h2>
@@ -266,6 +268,52 @@ function VoicePanel() {
         </select>
       </label>
       <p className="muted small">{t("whisperNote")}</p>
+      <h3>{t("voiceEngine")}</h3>
+      <Choice
+        name="voice-engine"
+        value={v.engine}
+        options={[
+          ["system", t("voiceSystem")],
+          ["piper", t("voicePiper")],
+          ["realtime", t("voiceRealtime")],
+        ]}
+        onChange={(engine) => setVoice({ engine })}
+      />
+      {v.engine === "realtime" && (
+        <>
+          <Choice
+            name="voice-realtime"
+            value={v.realtime}
+            options={[
+              ["google", "Google Gemini Live"],
+              ["openai", "OpenAI Realtime"],
+            ]}
+            onChange={(realtime) => setVoice({ realtime })}
+          />
+          <p className="muted small">{t("realtimeNote")}</p>
+        </>
+      )}
+      {v.engine === "piper" && <p className="muted small">{t("piperNote")}</p>}
+      <h3>{t("listenMode")}</h3>
+      <Choice
+        name="voice-listen"
+        value={v.listen}
+        options={[
+          ["hold", t("holdToTalk")],
+          ["always", t("listenAlways")],
+        ]}
+        onChange={(listen) => setVoice({ listen })}
+      />
+      {v.listen === "always" && <p className="muted small">{t("listenNote")}</p>}
+      <h3>{t("dialect")}</h3>
+      <select value={v.dialect} onChange={(e) => setVoice({ dialect: e.target.value as VoiceSettings["dialect"] })}>
+        {(["msa", "egyptian", "gulf", "levantine", "maghrebi"] as const).map((d) => (
+          <option key={d} value={d}>
+            {t(`dialect_${d}`)}
+          </option>
+        ))}
+      </select>
+      <p className="muted small">{t("dialectNote")}</p>
     </Card>
   );
 }

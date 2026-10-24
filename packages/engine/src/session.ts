@@ -6,7 +6,7 @@
 // The engine owns no audio and no UI: speech and the beat source are injected, so
 // Chat, Voice and tests drive the same loop.
 import { z } from "zod";
-import { languageRule, structured, type Ctx } from "./llm.ts";
+import { dialectRule, languageRule, structured, type Ctx, type Dialect } from "./llm.ts";
 import type { Lang } from "./schema.ts";
 import { backToPlanRule, paceRule, paceSignals } from "./adapt.ts";
 
@@ -492,6 +492,8 @@ export interface LlmBrainOptions {
   maxBeats?: number;
   /** What the tutor knows about the learner (memoryText), read at session start. */
   learner?: string;
+  /** Spoken Arabic for the "say" lines (T-25); only used when lang is "ar". */
+  dialect?: Dialect;
   /** Mastery score of this objective from earlier sessions; sets the opening pace. */
   level?: number;
 }
@@ -514,7 +516,7 @@ export const BOARD_FORMATS =
 
 /** The tutor leads with an LLM: one structured beat per call. */
 export function llmBrain(ctx: Ctx, lang: Lang, opts: LlmBrainOptions): TutorBrain {
-  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS} ${languageRule(lang)}${opts.learner ? `
+  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS} ${languageRule(lang)}${dialectRule(lang, opts.dialect)}${opts.learner ? `
 
 What you know about this learner (use it to teach them better; do not recite it):
 ${opts.learner}` : ""}`;

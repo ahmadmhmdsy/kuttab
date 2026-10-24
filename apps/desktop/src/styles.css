@@ -1163,6 +1163,9 @@ main.live {
   font-size: 0.9rem;
   min-block-size: 1.2em;
 }
+.live-always {
+  margin-inline-start: 0.5em;
+}
 .live-orb {
   inline-size: 180px;
   block-size: 180px;

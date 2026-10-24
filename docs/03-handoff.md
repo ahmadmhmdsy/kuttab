@@ -33,6 +33,15 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T14:30:00+03:00 — T-25 done: voice options
+
+- **State:** the learner picks who speaks (system voice, Piper on this machine, or a provider's realtime voice), how the mic listens (hold to talk, or always listening), and, in Arabic, MSA or a dialect. T-24 is committed as `3071bb4`; T-25 is not committed.
+- **Did:** `settings.voice` = engine (system, piper, realtime), listen (hold, always), dialect (msa, egyptian, gulf, levantine, maghrebi), realtime provider (google, openai). New `mic.ts` (16 kHz mono frames), `vad.ts` (energy VAD with an adaptive noise floor, 2-frame start, 700 ms end, 300 ms pre-roll that does not count as speech, 300 ms minimum, 30 s cap, mute), `realtime.ts` (Gemini Live and OpenAI Realtime over WebSocket with the keychain key: a read-aloud voice and a transcriber, 24 kHz playback), `piper.ts` (piper-tts-web, voice kept in OPFS, ONNX runtime and phonemizer served by the app through `vite.config.ts`), `voice.ts` (`sessionVoice`: one pipeline per live session; any failure falls back to the system voice and Whisper with one notice). `LiveView` voice mode: always-listening keeps the mic open, the VAD is muted while the tutor speaks or thinks and while an answer is transcribed (echo handling), and a badge shows it. Captions now show spoken answer feedback. Engine: `dialectRule` and `DIALECT_NAME`; `llmBrain` takes `dialect` so the tutor speaks in everyday dialect and keeps the board, checks and feedback in MSA. CSP allows the Google and OpenAI realtime sockets. Settings has a voice card; new en/ar strings.
+- **Gemini Live note:** the server ends a turn only after it hears silence, so `transcribe` adds 1.5 s of silence and returns the interim text if the final does not come (2.5 s after the last interim, 15 s overall). Without the silence it waited about 60 s and the socket closed.
+- **Verified:** tsc clean (desktop, engine); vitest 101/101. Tauri over CDP with a fake mic playing recorded speech: always-listening in Arabic (Gemini, Egyptian) went listening, transcribing, speaking feedback, then back to "your turn", twice. Gemini read lines aloud (English in 4.7 s) and transcribed English and Arabic correctly. Piper's wasm, data and runtime files load from the app, and the module loads.
+- **Unverified / open:** no Piper voice was downloaded (63 MB, needs the learner's OK), so Piper has not been heard. OpenAI Realtime is untested (no key). The VAD is energy-based, so loud speakers without headphones may still trigger it after the tutor stops. There is one Arabic Piper voice; dialects only change the realtime voice and the tutor's wording. Hold mode was not re-run live after the always-listening work.
+- **Next:** the next pending task in `docs/04-tasks.md` (T-26, local mode).
+
 ## 2026-10-24T14:00:00+03:00 — T-24 done: learner sources beyond text
 
 - **State:** learners can add images, audio, video, subtitle files and YouTube links as sources, and each is searchable with a locator a citation can point at. T-23 is committed as `9d61024`; T-24 is not committed.

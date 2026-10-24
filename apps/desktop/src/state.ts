@@ -2,7 +2,7 @@
 // store through Course and the knowledge base; this zustand store holds what
 // the screens render: route, settings, profile and live counters.
 import { create } from "zustand";
-import { Course, K, liveStreak, type Lang, type LearnerProfile } from "@kuttab/engine";
+import { Course, K, liveStreak, type Dialect, type Lang, type LearnerProfile } from "@kuttab/engine";
 import { KnowledgeBase, type KbSnapshot } from "@kuttab/kb";
 import type { LabRegistry } from "@kuttab/labs";
 import type { PriceOverride, SearchEngineId } from "@kuttab/llm-gateway";
@@ -19,6 +19,18 @@ export type SearchKind = "off" | "browser" | "native" | SearchEngineId;
 
 export type WhisperSize = "tiny" | "base" | "small";
 
+/**
+ * How the live tutor talks and listens (T-25). engine: who reads aloud — the
+ * system voices, Piper on this machine, or a provider's realtime voice (which
+ * also hears the learner). listen: hold-to-talk, or always listening with VAD.
+ */
+export interface VoiceSettings {
+  engine: "system" | "piper" | "realtime";
+  listen: "hold" | "always";
+  dialect: Dialect;
+  realtime: "google" | "openai";
+}
+
 export interface Settings {
   uiLang: Lang;
   teacher?: ModelChoice;
@@ -33,6 +45,7 @@ export interface Settings {
   prices: Record<string, PriceOverride>;
   tts: boolean;
   whisper: WhisperSize;
+  voice: VoiceSettings;
   theme: "system" | "light" | "dark";
   textSize: "normal" | "large";
   /** Teacher tools the learner switched off (ADR 0001). */
@@ -51,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   prices: {},
   tts: true,
   whisper: "tiny",
+  voice: { engine: "system", listen: "hold", dialect: "msa", realtime: "google" },
   theme: "system",
   textSize: "normal",
   toolsOff: [],
@@ -157,7 +171,8 @@ export async function boot(createPlatform: () => Promise<Platform>, createLabs: 
   const course = new Course(platform.store);
   const stored = await platform.store.get<StoredKb>(K.kb);
   svc = { platform, course, labs: createLabs(), kb: stored ? KnowledgeBase.from(stored.snapshot) : new KnowledgeBase(), kbEmbedder: stored?.embedder };
-  const settings = { ...DEFAULT_SETTINGS, ...(await platform.store.get<Settings>(K.settings)) };
+  const saved = await platform.store.get<Settings>(K.settings);
+  const settings = { ...DEFAULT_SETTINGS, ...saved, voice: { ...DEFAULT_SETTINGS.voice, ...saved?.voice } };
   const total = { ...ZERO_USAGE, ...(await platform.store.get<Usage>(K.usage)) };
   useStore.setState({ settings, profile: await course.profile(), total, ready: true });
   await refreshCounters();

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MockLanguageModelV4 } from "ai/test";
-import { OFF_PLAN_AFTER, llmBrain, offPlan, paceFor, paceSignals, type LessonRecord, type RecordEntry } from "../src/index.ts";
+import { OFF_PLAN_AFTER, dialectRule, llmBrain, offPlan, paceFor, paceSignals, type LessonRecord, type RecordEntry } from "../src/index.ts";
 
 const check = { question: "Is 2/4 equal to 1/2?", choices: ["yes", "no"], answer: "yes" };
 const base: LessonRecord = { id: "r", lang: "en", title: "Fractions", startedAt: 0, beats: [], entries: [] };
@@ -85,5 +85,18 @@ describe("live adaptation", () => {
     await brain.reply(asked(OFF_PLAN_AFTER), "last");
     expect(promptOf(m, 0)).not.toContain("back to the lesson");
     expect(promptOf(m, 1)).toContain("back to the lesson");
+  });
+  it("an Arabic dialect shapes the spoken lines only, and only in Arabic", async () => {
+    expect(dialectRule("ar", "egyptian")).toContain("Egyptian Arabic");
+    expect(dialectRule("ar", "egyptian")).toContain("Modern Standard Arabic");
+    expect(dialectRule("ar", "msa")).toBe("");
+    expect(dialectRule("en", "gulf")).toBe("");
+
+    const egyptian = model();
+    await llmBrain({ teacher: egyptian }, "ar", { material: "Fractions", dialect: "egyptian" }).nextBeat({ ...base, lang: "ar" });
+    expect(promptOf(egyptian)).toContain("everyday Egyptian Arabic");
+    const msa = model();
+    await llmBrain({ teacher: msa }, "ar", { material: "Fractions" }).nextBeat({ ...base, lang: "ar" });
+    expect(promptOf(msa)).not.toContain("everyday");
   });
 });
