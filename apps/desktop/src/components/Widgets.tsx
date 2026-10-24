@@ -7,7 +7,8 @@ import DOMPurify from "dompurify";
 import type { RunOutput } from "@kuttab/labs";
 import { useT } from "../i18n.ts";
 import { services, useStore } from "../state.ts";
-import { errorText } from "../ai.ts";
+import { drawImage, errorText } from "../ai.ts";
+import type { MadeImage } from "@kuttab/llm-gateway";
 import { RunOutputView, Spinner } from "./common.tsx";
 
 export interface WidgetPart {
@@ -28,6 +29,8 @@ export function Widget({ part, onAnswer }: { part: WidgetPart; onAnswer?: (text:
       return <QuizWidget {...(i as QuizInput)} onAnswer={onAnswer} />;
     case "run_code":
       return <CodeWidget {...(i as { language: string; code: string })} />;
+    case "make_image":
+      return <ImageWidget {...(i as { prompt: string; caption: string })} />;
     default:
       return null;
   }
@@ -212,6 +215,48 @@ function QuizWidget({ question, choices, answer, explanation, onAnswer }: QuizIn
       </div>
       {picked !== undefined && <p className="muted">{explanation}</p>}
     </div>
+  );
+}
+
+/** Drawn pictures are kept with the learner's data, so reopening a lesson does not pay to draw again. */
+function imageKey(prompt: string): string {
+  const m = useStore.getState().settings.image;
+  let h = 0;
+  for (const c of `${m?.provider}:${m?.model}:${prompt}`) h = (Math.imul(h, 31) + c.charCodeAt(0)) | 0;
+  return `images/${(h >>> 0).toString(36)}`;
+}
+
+function ImageWidget({ prompt, caption }: { prompt: string; caption: string }) {
+  const t = useT();
+  const [img, setImg] = useState<MadeImage>();
+  const [err, setErr] = useState<string>();
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const { store } = services().platform;
+      const key = imageKey(prompt);
+      try {
+        const made = (await store.get<MadeImage>(key)) ?? (await drawImage(prompt));
+        await store.set(key, made);
+        if (live) setImg(made);
+      } catch (e) {
+        if (live) setErr(errorText(e));
+      }
+    })();
+    return () => {
+      live = false;
+    };
+  }, [prompt]);
+  if (err) return <div className="error">{t("imageFailed")}: {err}</div>;
+  if (!img) return <div className="widget row"><Spinner /> {t("imageDrawing")}</div>;
+  return (
+    <figure className="widget made-image">
+      <img src={img.dataUri} alt={caption} />
+      <figcaption>
+        {caption}
+        <small className="muted">{img.source} · {t("imageNotice")}</small>
+      </figcaption>
+    </figure>
   );
 }
 

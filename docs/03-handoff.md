@@ -33,6 +33,14 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T18:00:00+03:00 — T-27 done: images, looks, goals and reminders, several learners
+
+- **State:** T-27 built and checked in the app; not committed (T-26 is `9a25cf5`).
+- **Built:** an image model role (`llm-gateway/src/image.ts`: OpenAI and compatible servers through the AI SDK, Gemini `generateContent`, Imagen `predict`); the teacher's `make_image` tool and `gen:` board prompts (`drawBoard`), only offered when an image model is set; every image shows its source and an AI-image notice. Tutor looks orb / face / character (`TutorAvatar.tsx`). A finish date per course (`engine/src/goal.ts`) with a pace pill, a reminder banner on open and the goal in the tutor's learner note. An opt-in tray (`src-tauri/src/tray.rs`, autostart with `--tray`, notification plugin) that sends one reminder notice when started hidden; closing the window hides it while the tray is on. Several learners: data under `p/<id>/`, a header switcher, add/switch/delete in Settings → Learning; no PIN.
+- **Verified:** typecheck, vitest 128/128, `cargo check`. Tauri CDP: a goal 3 days out showed "on track · about 8.8 a week" and the banner after reload; a new learner got the welcome screen with empty data, switching back kept the main learner's goal, delete worked; the character look preview rendered.
+- **Unverified / open:** no live generated image — GOOGLE_API_KEY reached Google but `gemini-2.5-flash-image` returned a quota error (no free tier for image models); a paid key or an OpenAI-compatible image server is needed. Tray startup and OS notifications were not run (needs autostart at login). The character's hair draws in the skin colour. Profile locks stay undecided.
+- **Next:** commit T-27; get a key that can make images to see one live.
+
 ## 2026-10-24T16:00:00+03:00 — T-26 done: a live session on a local model with no network
 
 - **State:** with the learner's OK, Ollama 0.40.10 is installed (winget) and `llama3.2` (2.0 GB) is pulled; it runs fully on the GPU. T-26 is done but not committed (T-25 is `ace5b21`).

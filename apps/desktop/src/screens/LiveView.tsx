@@ -1,12 +1,13 @@
 // Live lesson, Chat mode: the tutor leads, speaks each sentence as it goes, and
 // draws on a board with history. Built on the engine's LiveSession.
 import { useEffect, useRef, useState } from "react";
-import { LiveSession, boardHistory, learnFromSession, lessonPlainText, llmBrain, memoryText, scriptBrain, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
+import { LiveSession, boardHistory, goalNote, goalPace, learnFromSession, lessonPlainText, llmBrain, memoryText, scriptBrain, paceFor, paceSignals, type Lang, type Plan, type SessionState, type Speaker } from "@kuttab/engine";
 import { useT, type StrKey } from "../i18n.ts";
 import { planLang, refreshCounters, services, useStore } from "../state.ts";
-import { liveCtx, makeCtx, stepHits, teacherIsLocal } from "../ai.ts";
+import { boardDrawer, liveCtx, makeCtx, stepHits, teacherIsLocal } from "../ai.ts";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
 import { BoardItem } from "../components/Board.tsx";
+import { TutorAvatar } from "../components/TutorAvatar.tsx";
 import { WHISPER_SIZE_MB, canSpeak, sentences, stopSpeaking, whisperCached } from "../speech.ts";
 import { MIC_RATE, openMic, type Mic } from "../mic.ts";
 import { Vad, concat } from "../vad.ts";
@@ -77,14 +78,17 @@ export function LiveView({ planId, objectiveId }: { planId: string; objectiveId:
         lesson ? lessonPlainText(lesson) : "",
         ...hits.map((h) => `[${h.source.title}] ${h.chunk.text}`),
       ].filter(Boolean).join("\n\n");
-      const known = (await course.mastery(planId))[objectiveId]?.score;
+      const mastery = await course.mastery(planId);
+      const known = mastery[objectiveId]?.score;
+      const goal = await course.goal(planId);
       setLevel(known);
       const { voice: vs, whisper, liveMode } = useStore.getState().settings;
       const ctx = await liveCtx(abort.signal, (to) => live && setNotice(t(to === "local" ? "budgetLocal" : "budgetNone")));
       const brainOpts = {
         material,
-        learner: memoryText(await course.memory(), planId) || undefined,
+        learner: [memoryText(await course.memory(), planId), goal ? goalNote(goal, goalPace(p, mastery, goal)) : ""].filter(Boolean).join("\n") || undefined,
         level: known,
+        drawImage: boardDrawer(abort.signal),
         dialect: lang === "ar" ? vs.dialect : undefined,
       };
       const brain = (liveMode === "low" ? scriptBrain : llmBrain)(ctx, lang, brainOpts);
@@ -483,6 +487,7 @@ function VoicePanel(props: {
   };
 
   const listening = phase === "listening" || (phase === "" && hearing);
+  const tutorLook = useStore.getState().settings.look;
   const look = listening ? "listening" : phase || state === "thinking" ? "thinking" : state === "speaking" ? "speaking" : "idle";
   const atCheck = state === "awaiting_answer" && !!session.awaiting;
   const label: StrKey | undefined = listening ? "stListening" : phase ? "transcribing" : STATE_LABEL[state];
@@ -492,7 +497,7 @@ function VoicePanel(props: {
         {label ? t(label) : ""}
         {always && <span className="badge live-always">{t("listenAlways")}</span>}
       </div>
-      <div className={`live-orb ${look}`} aria-hidden />
+      <TutorAvatar look={tutorLook} state={look} />
       <p className="live-caption" dir="auto" aria-live="polite">
         {caption}
       </p>

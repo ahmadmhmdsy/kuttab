@@ -5,6 +5,7 @@ import { App } from "./App.tsx";
 import { applyDocumentLang } from "./i18n.ts";
 import { createPlatform } from "./platform/index.ts";
 import { applyAppearance, boot, useStore } from "./state.ts";
+import { setTray, trayStartup } from "./tray.ts";
 import "./styles.css";
 
 const root = createRoot(document.getElementById("root")!);
@@ -21,6 +22,9 @@ boot(createPlatform, createBrowserLabs)
         <App />
       </StrictMode>,
     );
+    // The tray icon lives as long as the process; put it back when the learner keeps it on.
+    if (useStore.getState().settings.tray) void setTray(true).catch(console.warn);
+    void trayStartup().catch(console.warn);
   })
   .catch((e: unknown) => {
     console.error(e);

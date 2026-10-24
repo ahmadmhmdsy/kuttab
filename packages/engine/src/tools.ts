@@ -94,8 +94,15 @@ const remember = defineTool({
   },
 });
 
-export const TEACHER_TOOLS: TeacherTool[] = [chart, diagram, math, quiz, code, sources, remember];
-export type ToolName = "show_chart" | "show_diagram" | "show_math" | "quiz_card" | "run_code" | "lookup_sources" | "remember_learner_fact";
+const image = defineTool({
+  name: "make_image",
+  description: "Have the learner's image model draw a picture. Use it rarely, only for what a diagram cannot show (a scene, an organism, an object); never for text, charts or formulas.",
+  widget: true,
+  input: z.object({ prompt: z.string().max(600).describe("one or two sentences in English describing the picture"), caption: z.string().max(200) }),
+});
+
+export const TEACHER_TOOLS: TeacherTool[] = [chart, diagram, math, quiz, code, image, sources, remember];
+export type ToolName = "show_chart" | "show_diagram" | "show_math" | "quiz_card" | "run_code" | "make_image" | "lookup_sources" | "remember_learner_fact";
 
 export type AgentEvent =
   | { type: "text"; text: string }

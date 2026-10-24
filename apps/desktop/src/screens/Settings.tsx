@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { TEACHER_TOOLS, type ToolName } from "@kuttab/engine";
 import { CATALOG, nativeSearchProvider, PROVIDERS, SEARCH_ENGINES, supportsTools } from "@kuttab/llm-gateway";
 import { applyDocumentLang, useT } from "../i18n.ts";
-import { modelKey, resetUsage, services, useStore, type ModelChoice, type SearchKind, type Settings as AppSettings, type Usage, type VoiceSettings, type WhisperSize } from "../state.ts";
+import { addLearner, deleteLearner, modelKey, resetUsage, saveLearners, services, switchLearner, useStore, type ModelChoice, type SearchKind, type Settings as AppSettings, type TutorLook, type Usage, type VoiceSettings, type WhisperSize } from "../state.ts";
 import { errorText, keyId } from "../ai.ts";
 import { BackupError, makeBackup, MAX_BACKUP_BYTES, parseBackup, restoreBackup } from "../backup.ts";
 import { KeyField, ModelPicker } from "../components/ModelPicker.tsx";
@@ -10,6 +10,8 @@ import { searchKeyId } from "../web.ts";
 import { ProfileForm } from "../components/ProfileForm.tsx";
 import { Card } from "../components/common.tsx";
 import { LocalPanel } from "../components/LocalPanel.tsx";
+import { TutorAvatar } from "../components/TutorAvatar.tsx";
+import { setTray } from "../tray.ts";
 import { canSpeak, WHISPER_SIZE_MB } from "../speech.ts";
 
 export function UsageText({ u }: { u: Usage }) {
@@ -114,6 +116,11 @@ function ModelsPanel() {
       <Card>
         <h2>{t("embedderModel")}</h2>
         <ModelPicker role="embedder" value={settings.embedder} onChange={(embedder) => updateSettings({ embedder })} emptyLabel={t("none")} />
+      </Card>
+      <Card>
+        <h2>{t("imageModel")}</h2>
+        <p className="muted small">{t("imageModelNote")}</p>
+        <ModelPicker role="image" value={settings.image} onChange={(image) => updateSettings({ image })} emptyLabel={t("noImages")} />
       </Card>
 
       {(settings.favorites.length > 0 || settings.custom.length > 0) && (
@@ -237,10 +244,97 @@ function LearningPanel() {
   const t = useT();
   const { profile, setProfile, go } = useStore();
   return (
+    <>
+      <Card>
+        <h2>{t("aboutYou")}</h2>
+        <ProfileForm key={JSON.stringify(profile)} initial={profile} onSave={setProfile} />
+        <button className="link" onClick={() => go({ name: "memory" })}>🧠 {t("tutorKnows")}</button>
+      </Card>
+      <LearnersCard />
+      <RemindersCard />
+    </>
+  );
+}
+
+/** Several learners on one computer (decision 0002 item 21). No PIN yet (item 24). */
+function LearnersCard() {
+  const t = useT();
+  useStore((s) => s.kbVersion);
+  const { learners } = services();
+  const [name, setName] = useState("");
+  const [err, setErr] = useState<string>();
+  const first = learners.list[0]?.id;
+  return (
     <Card>
-      <h2>{t("aboutYou")}</h2>
-      <ProfileForm key={JSON.stringify(profile)} initial={profile} onSave={setProfile} />
-      <button className="link" onClick={() => go({ name: "memory" })}>🧠 {t("tutorKnows")}</button>
+      <h2>{t("learners")}</h2>
+      <p className="muted small">{t("learnersNote")}</p>
+      <ul className="plain learners">
+        {learners.list.map((p) => (
+          <li key={p.id} className="row">
+            <input
+              aria-label={t("learnerName")}
+              defaultValue={p.name}
+              placeholder={t("learnerUnnamed")}
+              onBlur={(e) => {
+                const v = e.target.value.trim();
+                if (v !== p.name) void saveLearners({ ...learners, list: learners.list.map((x) => (x.id === p.id ? { ...x, name: v } : x)) });
+              }}
+            />
+            {p.id === learners.current ? (
+              <span className="pill">{t("learnerCurrent")}</span>
+            ) : (
+              <>
+                <button onClick={() => void switchLearner(p.id)}>{t("learnerSwitch")}</button>
+                {p.id !== first && (
+                  <button
+                    className="link danger"
+                    onClick={async () => {
+                      if (!confirm(t("learnerDeleteConfirm", { name: p.name || t("learnerUnnamed") }))) return;
+                      try {
+                        await deleteLearner(p.id);
+                      } catch (e) {
+                        setErr(errorText(e));
+                      }
+                    }}
+                  >
+                    {t("remove")}
+                  </button>
+                )}
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+      <div className="row">
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("learnerName")} />
+        <button
+          disabled={!name.trim()}
+          onClick={async () => {
+            await addLearner(name.trim());
+            setName("");
+          }}
+        >
+          {t("learnerAdd")}
+        </button>
+      </div>
+      {err && <div className="error">{err}</div>}
+    </Card>
+  );
+}
+
+/** Goal reminders (decision 0002 items 20 and 23): on open always, from the tray only if the learner opts in. */
+function RemindersCard() {
+  const t = useT();
+  const { settings, updateSettings } = useStore();
+  return (
+    <Card>
+      <h2>{t("reminders")}</h2>
+      <p className="muted small">{t("remindersNote")}</p>
+      <label className="inline">
+        <input type="checkbox" checked={settings.tray} onChange={(e) => void setTray(e.target.checked).then(() => updateSettings({ tray: e.target.checked }))} />
+        {t("trayStart")}
+      </label>
+      <p className="muted small">{t("trayNote")}</p>
     </Card>
   );
 }
@@ -364,6 +458,20 @@ function AppearancePanel() {
             ["dark", t("themeDark")],
           ]}
         />
+      </Card>
+      <Card>
+        <h2>{t("tutorLook")}</h2>
+        <Choice<TutorLook>
+          name="look"
+          value={settings.look}
+          onChange={(look) => updateSettings({ look })}
+          options={[
+            ["orb", t("lookOrb")],
+            ["face", t("lookFace")],
+            ["character", t("lookCharacter")],
+          ]}
+        />
+        <TutorAvatar look={settings.look} state="idle" />
       </Card>
       <Card>
         <h2>{t("textSize")}</h2>
@@ -503,8 +611,9 @@ function PrivacyPanel() {
           className="danger"
           onClick={async () => {
             if (!confirm(t("eraseConfirm"))) return;
-            const { platform } = services();
-            for (const k of await platform.store.keys()) await platform.store.delete(k);
+            const { platform, root } = services();
+            // Every learner on this computer, not just the current one.
+            for (const k of await root.keys()) await root.delete(k);
             for (const p of PROVIDERS) await platform.secrets.delete(keyId(p.id));
             try {
               for (const k of Object.keys(localStorage)) if (k.startsWith("kuttab.")) localStorage.removeItem(k);

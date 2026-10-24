@@ -496,6 +496,26 @@ export interface LlmBrainOptions {
   dialect?: Dialect;
   /** Mastery score of this objective from earlier sessions; sets the opening pace. */
   level?: number;
+  /**
+   * The learner's image model (T-27). When set, the tutor may ask for a picture
+   * with an image board whose content is "gen: <prompt>"; the picture replaces
+   * the prompt before the beat is shown, so the record keeps the image.
+   */
+  drawImage?: (prompt: string) => Promise<{ dataUri: string; source: string }>;
+}
+
+/** Image boards written as "gen: <prompt>" are drawn by the image model; a failed draw drops the board, not the beat. */
+export async function drawBoard<B extends Beat>(beat: B, draw?: LlmBrainOptions["drawImage"]): Promise<B> {
+  const b = beat.board;
+  const m = b?.kind === "image" ? /^\s*gen:\s*([\s\S]+)$/i.exec(b.content ?? "") : null;
+  if (!b || !m) return beat;
+  if (!draw) return { ...beat, board: undefined };
+  try {
+    const img = await draw(m[1]!.trim());
+    return { ...beat, board: { ...b, content: img.dataUri, source: img.source } };
+  } catch {
+    return { ...beat, board: undefined };
+  }
 }
 
 const NextBeat = z.object({
@@ -516,7 +536,7 @@ export const BOARD_FORMATS =
 
 /** The tutor leads with an LLM: one structured beat per call. */
 export function llmBrain(ctx: Ctx, lang: Lang, opts: LlmBrainOptions): TutorBrain {
-  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS} ${languageRule(lang)}${dialectRule(lang, opts.dialect)}${opts.learner ? `
+  const system = `${opts.teacher ?? "You are a patient, lively tutor who leads a live lesson."} Teach one small step per beat: say one to three short spoken sentences (no markdown, no lists), optionally put something on the board, and every few beats ask a short check. Prefer choice checks. ${BOARD_FORMATS}${opts.drawImage ? ' An image board may also be "gen: <one-sentence picture description in English>" to have an image model draw it; use it rarely, only for what a diagram cannot show (a scene, an organism, an object), never for text or charts.' : ""} ${languageRule(lang)}${dialectRule(lang, opts.dialect)}${opts.learner ? `
 
 What you know about this learner (use it to teach them better; do not recite it):
 ${opts.learner}` : ""}`;
@@ -528,11 +548,11 @@ ${opts.learner}` : ""}`;
       const r = await structured(ctx, "teacher", "live beat", NextBeat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec) || "(nothing yet — open the lesson)"}\n\n${pace ? `${pace}\n\n` : ""}Give the next beat, or done=true if finished.`);
       if (r.done || !r.beat) return null;
       taught++;
-      return r.beat;
+      return drawBoard(r.beat, opts.drawImage);
     },
     async reply(rec, q) {
       const back = backToPlanRule(paceSignals(rec));
-      return structured(ctx, "teacher", "live reply", Beat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec)}\n\nThe learner just interrupted: "${q}". Answer it briefly as one beat, then the lesson goes on.${back ? `\n\n${back}` : ""}`);
+      return drawBoard(await structured(ctx, "teacher", "live reply", Beat, system, `Material:\n${opts.material}\n\nSo far:\n${recap(rec)}\n\nThe learner just interrupted: "${q}". Answer it briefly as one beat, then the lesson goes on.${back ? `\n\n${back}` : ""}`), opts.drawImage);
     },
     async grade(_rec, check, answer) {
       return structured(

@@ -1,10 +1,10 @@
 // Picks a provider and model for one role. Offers the curated catalog, the
 // learner's favorites and custom list, and any id the provider reports.
 import { useEffect, useId, useState } from "react";
-import { CATALOG, PROVIDERS, providerInfo, type Role } from "@kuttab/llm-gateway";
+import { CATALOG, PROVIDERS, canMakeImages, providerInfo, type Role } from "@kuttab/llm-gateway";
 import { useT } from "../i18n.ts";
 import { modelKey, services, useStore, type ModelChoice } from "../state.ts";
-import { discoverModels, errorText, keyId, testModel } from "../ai.ts";
+import { discoverModels, drawImage, errorText, keyId, testModel } from "../ai.ts";
 import { hasWebGpu, webLlmModels } from "../platform/webllm.ts";
 
 export function ModelPicker({ role, value, onChange, emptyLabel }: { role: Role; value?: ModelChoice; onChange: (v?: ModelChoice) => void; emptyLabel: string }) {
@@ -16,7 +16,7 @@ export function ModelPicker({ role, value, onChange, emptyLabel }: { role: Role;
   const [status, setStatus] = useState<{ ok: boolean; text: string }>();
   const [busy, setBusy] = useState(false);
 
-  const providers = PROVIDERS.filter((p) => (role === "embedder" ? p.embeddings : true));
+  const providers = PROVIDERS.filter((p) => (role === "embedder" ? p.embeddings : role === "image" ? canMakeImages(p.id) : true));
   const info = value ? providerInfo(value.provider) : undefined;
 
   useEffect(() => {
@@ -112,8 +112,13 @@ export function ModelPicker({ role, value, onChange, emptyLabel }: { role: Role;
                   setBusy(true);
                   setStatus(undefined);
                   try {
-                    const reply = await testModel(value);
-                    setStatus({ ok: true, text: `${t("testOk")} “${reply.slice(0, 40)}”` });
+                    if (role === "image") {
+                      await drawImage("A small red circle on white", { aspectRatio: "1:1" }, value);
+                      setStatus({ ok: true, text: t("testOk") });
+                    } else {
+                      const reply = await testModel(value);
+                      setStatus({ ok: true, text: `${t("testOk")} “${reply.slice(0, 40)}”` });
+                    }
                   } catch (e) {
                     setStatus({ ok: false, text: errorText(e) });
                   } finally {

@@ -1198,6 +1198,102 @@ main.live {
     transform: scale(1.1);
   }
 }
+/* Tutor looks: face and character (T-27). Colors follow the theme. */
+.avatar {
+  inline-size: 180px;
+  block-size: 180px;
+  overflow: visible;
+}
+.avatar .avatar-skin {
+  fill: var(--primary-soft);
+  stroke: var(--primary);
+  stroke-width: 4;
+}
+.avatar-body path,
+.avatar-body rect {
+  fill: var(--primary);
+}
+.avatar-hair {
+  fill: var(--text);
+  opacity: 0.8;
+}
+.avatar-eyes ellipse,
+.avatar-dots circle {
+  fill: var(--text);
+}
+.avatar-brows path {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.avatar-mouth {
+  fill: var(--text);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.avatar-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: avatar-blink 5s infinite;
+}
+.avatar.idle .avatar-head {
+  animation: orb-breathe 4s ease-in-out infinite;
+  transform-origin: 100px 100px;
+}
+.avatar.speaking .avatar-mouth {
+  animation: avatar-talk 0.35s ease-in-out infinite alternate;
+}
+.avatar.listening .avatar-brows {
+  transform: translateY(-5px);
+}
+.avatar.listening .avatar-mouth {
+  transform: scaleX(0.6);
+}
+.avatar.thinking .avatar-eyes {
+  transform: translate(6px, -6px);
+  animation: none;
+}
+.avatar.thinking .avatar-dots circle {
+  animation: avatar-dot 1.2s ease-in-out infinite;
+}
+.avatar.thinking .avatar-dots circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.avatar.thinking .avatar-dots circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes avatar-talk {
+  to {
+    transform: scaleY(3.2);
+  }
+}
+@keyframes avatar-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes avatar-dot {
+  50% {
+    opacity: 0.3;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avatar * {
+    animation: none !important;
+  }
+}
+.settings .avatar,
+.settings .live-orb {
+  inline-size: 96px;
+  block-size: 96px;
+  margin-block-start: 8px;
+}
 .live-caption {
   max-inline-size: 36rem;
   min-block-size: 3em;
@@ -1302,3 +1398,53 @@ main.live {
 .fact > span, .fact > input { flex: 1; }
 .fact small { white-space: nowrap; }
 .memory .row input { flex: 1; }
+
+/* Goals and reminders (T-27) */
+.reminder-banner {
+  position: relative;
+  background: var(--warn-soft);
+  color: var(--warn);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 40px 10px 14px;
+  margin-block-end: 16px;
+}
+.reminder-banner ul {
+  margin: 4px 0 0;
+  padding-inline-start: 18px;
+}
+.reminder-banner > .link {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 10px;
+}
+.goal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-block: 8px;
+}
+.goal-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.goal-row input[type="date"] {
+  padding: 2px 6px;
+}
+.pace {
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.pace-behind,
+.pace-overdue {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+.learner-switch {
+  font-size: inherit;
+  padding: 2px 6px;
+}

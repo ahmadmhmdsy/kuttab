@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useT, type StrKey } from "./i18n.ts";
-import { useStore, type Route } from "./state.ts";
+import { services, switchLearner, useStore, type Route } from "./state.ts";
 import { onWebLlmProgress, type WebLlmProgress } from "./platform/webllm.ts";
 import { Onboarding } from "./screens/Onboarding.tsx";
 import { Library } from "./screens/Library.tsx";
@@ -48,6 +48,23 @@ function Screen({ route }: { route: Route }) {
   }
 }
 
+/** Who is learning, when more than one learner uses this computer (decision 0002 item 21). */
+function LearnerSwitch() {
+  const t = useT();
+  useStore((s) => s.kbVersion); // saveLearners bumps it
+  const { learners } = services();
+  if (learners.list.length < 2) return null;
+  return (
+    <select className="learner-switch" aria-label={t("learners")} value={learners.current} onChange={(e) => void switchLearner(e.target.value)}>
+      {learners.list.map((l) => (
+        <option key={l.id} value={l.id}>
+          {l.name || t("learnerUnnamed")}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export function App() {
   const t = useT();
   const { route, go, settings, dueCount, streak, session } = useStore();
@@ -73,6 +90,7 @@ export function App() {
           ))}
         </nav>
         <div className="status small muted">
+          <LearnerSwitch />
           {streak > 0 && (
             <span title={t("streak")}>
               🔥 {streak}

@@ -1,12 +1,13 @@
 // Courses: the learner's plans, sample packs, new course from a topic, and
 // .kuttab import and export.
 import { useEffect, useState } from "react";
-import { buildTrack, exportPack, indexPack, parsePack, planFromPack, planProgress, type Lang, type MasteryMap, type SourceMix, type Pack, type Plan } from "@kuttab/engine";
+import { buildTrack, dayKey, exportPack, goalPace, indexPack, parsePack, planFromPack, planProgress, type Goal, type Lang, type MasteryMap, type Reminder, type SourceMix, type Pack, type Plan } from "@kuttab/engine";
 import { useT } from "../i18n.ts";
 import { planLang, refreshCounters, saveKb, services, useStore } from "../state.ts";
 import { kbEmbed, makeCtx } from "../ai.ts";
 import { SearchDeclined, webAdapter } from "../web.ts";
 import { Card, ErrorBox, Spinner } from "../components/common.tsx";
+import { goalReminders, markReminded, reminderText } from "../tray.ts";
 
 const RAW = import.meta.glob("../../../../packs/*.kuttab", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
 
@@ -46,17 +47,25 @@ export function Library() {
   const profile = useStore((s) => s.profile);
   const uiLang = useStore((s) => s.settings.uiLang);
   const kbVersion = useStore((s) => s.kbVersion);
-  const [plans, setPlans] = useState<{ plan: Plan; m: MasteryMap }[]>();
+  const [plans, setPlans] = useState<{ plan: Plan; m: MasteryMap; goal?: Goal }[]>();
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [err, setErr] = useState<unknown>();
 
   const load = async () => {
     const { course } = services();
     const ps = await course.plans();
-    setPlans(await Promise.all(ps.map(async (plan) => ({ plan, m: await course.mastery(plan.id) }))));
+    setPlans(await Promise.all(ps.map(async (plan) => ({ plan, m: await course.mastery(plan.id), goal: await course.goal(plan.id) }))));
   };
   useEffect(() => {
     void load();
   }, [kbVersion]);
+  // Reminders on open (decision 0002 item 23); shown once a day per goal.
+  useEffect(() => {
+    void goalReminders().then(async (rs) => {
+      setReminders(rs);
+      await markReminded(rs);
+    });
+  }, []);
 
   const addPack = async (pack: Pack) => {
     setErr(undefined);
@@ -83,13 +92,31 @@ export function Library() {
     <main className="library">
       <h1>{t("yourCourses")}</h1>
       {err !== undefined && <ErrorBox error={err} />}
+      {reminders.length > 0 && (
+        <div className="reminder-banner" role="status">
+          <strong>{t("reminders")}</strong>
+          <ul>
+            {reminders.map((r) => (
+              <li key={r.goal.planId} dir="auto">
+                {reminderText(r)}{" "}
+                <button className="link" onClick={() => go({ name: "plan", planId: r.plan.id })}>
+                  {t("continue")}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <button className="link" onClick={() => setReminders([])} aria-label={t("dismiss")}>
+            ✕
+          </button>
+        </div>
+      )}
       {!plans ? (
         <Spinner />
       ) : plans.length === 0 ? (
         <p className="muted">{t("noCourses")}</p>
       ) : (
         <div className="grid-cards">
-          {plans.map(({ plan, m }) => {
+          {plans.map(({ plan, m, goal }) => {
             const pct = Math.round(planProgress(plan, m) * 100);
             return (
               <Card key={plan.id} className="course">
@@ -105,6 +132,7 @@ export function Library() {
                 <small className="muted">
                   {pct}% · {plan.items.length} · {planLang(plan) === "ar" ? "العربية" : "English"}
                 </small>
+                <GoalRow plan={plan} m={m} goal={goal} onChange={load} />
                 <div className="row">
                   <button className="primary" onClick={() => go({ name: "plan", planId: plan.id })}>
                     {t("continue")}
@@ -172,6 +200,42 @@ export function Library() {
         />
       </label>
     </main>
+  );
+}
+
+/** A finish date for one course (decision 0002 item 20), its pace, and whether it reminds. */
+function GoalRow({ plan, m, goal, onChange }: { plan: Plan; m: MasteryMap; goal?: Goal; onChange: () => void }) {
+  const t = useT();
+  const { course } = services();
+  const save = async (g: Goal | undefined) => {
+    if (g) await course.saveGoal(g);
+    else await course.dropGoal(plan.id);
+    onChange();
+  };
+  const pace = goal ? goalPace(plan, m, goal) : undefined;
+  return (
+    <div className="goal-row small">
+      <label>
+        {t("goalDue")}
+        <input
+          type="date"
+          min={dayKey()}
+          value={goal?.due ?? ""}
+          onChange={(e) => void save(e.target.value ? { planId: plan.id, since: goal?.since ?? dayKey(), remind: goal?.remind ?? true, ...goal, due: e.target.value } : undefined)}
+        />
+      </label>
+      {goal && (
+        <label className="check">
+          <input type="checkbox" checked={goal.remind} onChange={(e) => void save({ ...goal, remind: e.target.checked })} />
+          {t("goalRemind")}
+        </label>
+      )}
+      {pace && (
+        <span className={`pace pace-${pace.status}`}>
+          {t(`pace_${pace.status}` as const, { perWeek: pace.perWeek, days: pace.daysLeft })}
+        </span>
+      )}
+    </div>
   );
 }
 

@@ -5,7 +5,8 @@ import { PROVIDERS } from "./providers.ts";
 // Prices are USD per million tokens, approximate, and editable in Settings;
 // `undefined` means unknown, and the cost meter then shows tokens only.
 
-export type Role = "teacher" | "grader" | "embedder";
+/** image: models that draw pictures for the teacher (T-27). */
+export type Role = "teacher" | "grader" | "embedder" | "image";
 
 export interface CatalogModel {
   provider: string;
@@ -41,6 +42,9 @@ export const CATALOG: CatalogModel[] = [
   { provider: "ollama", model: "gemma3:4b", label: "Gemma 3 4B (local)", roles: ["teacher", "grader"], size: "small", arabic: "fair", gb: 3.3, note: "About 3 GB" },
   { provider: "ollama", model: "bge-m3", label: "BGE-M3 embeddings (local)", roles: ["embedder"], size: "small", arabic: "good", gb: 1.2, note: "Multilingual; about 1.2 GB" },
   { provider: "ollama", model: "nomic-embed-text", label: "nomic-embed-text (local)", roles: ["embedder"], size: "small", arabic: "weak", gb: 0.27, note: "About 270 MB; English only" },
+  { provider: "google", model: "gemini-2.5-flash-image", label: "Gemini 2.5 Flash Image", roles: ["image"], size: "medium", arabic: "fair", note: "Draws diagrams and pictures; paid per image" },
+  { provider: "google", model: "imagen-4.0-generate-001", label: "Imagen 4", roles: ["image"], size: "large", arabic: "weak", note: "Photo-like pictures; paid per image" },
+  { provider: "openai", model: "gpt-image-1", label: "GPT Image 1", roles: ["image"], size: "large", arabic: "fair", note: "Paid per image" },
   { provider: "webllm", model: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", label: "Qwen2.5 1.5B (in-browser)", roles: ["grader"], size: "small", arabic: "fair", tools: false, gb: 1, note: "Needs WebGPU; about 1 GB cached by the app" },
 ];
 

@@ -41,7 +41,39 @@ export const K = {
   card: (id: string) => `cards/${id}`,
   kb: "kb",
   usage: "usage",
+  goals: "goals/",
+  goal: (planId: string) => `goals/${planId}`,
+  /** Root-level list of learners on this computer (T-27). Not inside any profile. */
+  profiles: "profiles",
 } as const;
+
+/** Key prefix of a learner profile other than the first one. */
+export const profilePrefix = (id: string) => `p/${id}/`;
+
+/**
+ * One learner's view of the shared store (decision 0002 item 21). The first
+ * profile keeps the unprefixed keys it always had, so existing data needs no
+ * move; it simply never sees other profiles' keys or the profile list. Other
+ * profiles live under "p/<id>/".
+ */
+export function profileStore(root: KvStore, id: string, isFirst: boolean): KvStore {
+  if (isFirst) {
+    const hidden = (k: string) => k.startsWith("p/") || k === K.profiles;
+    return {
+      get: (k) => root.get(k),
+      set: (k, v) => root.set(k, v),
+      delete: (k) => root.delete(k),
+      keys: async (prefix = "") => (await root.keys(prefix)).filter((k) => !hidden(k)),
+    };
+  }
+  const pre = profilePrefix(id);
+  return {
+    get: (k) => root.get(pre + k),
+    set: (k, v) => root.set(pre + k, v),
+    delete: (k) => root.delete(pre + k),
+    keys: async (prefix = "") => (await root.keys(pre + prefix)).map((k) => k.slice(pre.length)),
+  };
+}
 
 /** Short stable hash (FNV-1a) for cache keys. Not for security. */
 export function hash(s: string): string {

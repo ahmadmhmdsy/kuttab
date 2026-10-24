@@ -1,9 +1,10 @@
 // Kuttab host. Three jobs: a key-value store in SQLite (app data dir), API keys
 // in the OS keychain, and saving exports through a native dialog. Secret values
 // are never logged or returned anywhere except to the caller that asked.
-// The search window (browser.rs) is the fourth.
+// The search window (browser.rs) is the fourth; the opt-in tray (tray.rs) the fifth.
 mod browser;
 mod hardware;
+mod tray;
 
 use std::sync::Mutex;
 
@@ -110,11 +111,32 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![tray::HIDDEN_ARG]),
+        ))
         .setup(|app| {
             let conn = open_db(app.handle())?;
             app.manage(Db(Mutex::new(conn)));
             app.manage(browser::Browser::default());
+            // Started at sign-in: stay in the tray until the learner opens the window.
+            if tray::tray_started_hidden() {
+                tray::create(app.handle())?;
+                if let Some(w) = app.get_webview_window("main") {
+                    w.hide()?;
+                }
+            }
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            // With the tray on, closing the main window hides it.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" && tray::active(window.app_handle()) {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
         })
         .invoke_handler(tauri::generate_handler![
             kv_get,
@@ -129,7 +151,10 @@ pub fn run() {
             browser::browser_open,
             browser::browser_capture,
             browser::browser_show,
-            browser::browser_close
+            browser::browser_close,
+            tray::tray_set,
+            tray::tray_started_hidden,
+            tray::notify
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

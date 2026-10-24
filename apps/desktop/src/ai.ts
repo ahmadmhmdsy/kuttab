@@ -3,7 +3,7 @@
 import { embedMany, generateText } from "ai";
 import { TEACHER_TOOLS, addFacts, budgetCtx, objectiveQuery, packHits, type Ctx, type Objective, type TeacherTool, type ToolHost } from "@kuttab/engine";
 import type { Embed, Hit } from "@kuttab/kb";
-import { createEmbedder, createModel, estimateCost, isLocalModel, listModels, providerInfo, supportsTools, type FetchFn } from "@kuttab/llm-gateway";
+import { IMAGE_NOTICE, createEmbedder, createModel, estimateCost, isLocalModel, listModels, makeImage, providerInfo, supportsTools, type FetchFn, type ImageOptions, type MadeImage } from "@kuttab/llm-gateway";
 import { webLlmFetch } from "./platform/webllm.ts";
 import { addUsage, modelKey, services, useStore, type ModelChoice } from "./state.ts";
 
@@ -81,9 +81,31 @@ export async function liveCtx(signal: AbortSignal, onSwitch: (to: "local" | "non
 
 /** The teacher tools to offer: none for models without tool calls, minus what the learner switched off. */
 export function tutorTools(): TeacherTool[] {
-  const { teacher, toolsOff } = useStore.getState().settings;
+  const { teacher, toolsOff, image } = useStore.getState().settings;
   if (!teacher?.model || !supportsTools(teacher.provider, teacher.model)) return [];
-  return TEACHER_TOOLS.filter((t) => !toolsOff.includes(t.name));
+  return TEACHER_TOOLS.filter((t) => !toolsOff.includes(t.name) && (t.name !== "make_image" || !!image?.model));
+}
+
+/** True when the learner set an image model (decision 0002 item 3). */
+export function hasImageModel(): boolean {
+  return !!useStore.getState().settings.image?.model;
+}
+
+/** Draws with the learner's image model. Image prices are not in the catalog, so the cost counts as unknown. */
+export async function drawImage(prompt: string, opts: ImageOptions = {}, c = useStore.getState().settings.image): Promise<MadeImage> {
+  if (!c?.model) throw new Error("no image model");
+  const img = await makeImage({ provider: c.provider, model: c.model, baseURL: baseURLFor(c) }, await creds(c.provider), fetchFor(c.provider), prompt, opts);
+  addUsage(0, 0, isLocalModel({ provider: c.provider, baseURL: baseURLFor(c) }) ? 0 : undefined);
+  return img;
+}
+
+/** For the live board: the picture with its source line, notice included. */
+export function boardDrawer(signal?: AbortSignal): ((prompt: string) => Promise<{ dataUri: string; source: string }>) | undefined {
+  if (!hasImageModel()) return undefined;
+  return async (prompt) => {
+    const img = await drawImage(prompt, { aspectRatio: "16:9", abortSignal: signal });
+    return { dataUri: img.dataUri, source: `${img.source} · ${IMAGE_NOTICE}` };
+  };
 }
 
 /** What data tools may touch: the learner's documents and the profile notes. */

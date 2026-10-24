@@ -9,6 +9,7 @@ import type { Lesson, LearnerProfile } from "./schema.ts";
 import type { LessonRecord } from "./session.ts";
 import { LearnerMemory } from "./memory.ts";
 import type { ResourcePack } from "./track.ts";
+import type { Goal } from "./goal.ts";
 
 export class Course {
   constructor(private store: KvStore) {}
@@ -50,11 +51,27 @@ export class Course {
     await this.store.delete(K.plan(id));
     await this.store.delete(K.mastery(id));
     await this.store.delete(K.resources(id));
+    await this.store.delete(K.goal(id));
     for (const k of await this.store.keys(`lessons/${id}/`)) await this.store.delete(k);
     for (const k of await this.store.keys(`live/${id}/`)) await this.store.delete(k);
     for (const c of await this.cards()) if (c.planId === id) await this.store.delete(K.card(c.id));
     const mem = await this.memory();
     if (mem.facts.some((f) => f.trackId === id)) await this.saveMemory({ facts: mem.facts.filter((f) => f.trackId !== id) });
+  }
+
+  /** The finish date the learner set for a course, if any. */
+  goal(planId: string): Promise<Goal | undefined> {
+    return this.store.get<Goal>(K.goal(planId));
+  }
+  saveGoal(g: Goal): Promise<void> {
+    return this.store.set(K.goal(g.planId), g);
+  }
+  dropGoal(planId: string): Promise<void> {
+    return this.store.delete(K.goal(planId));
+  }
+  async goals(): Promise<Goal[]> {
+    const keys = await this.store.keys(K.goals);
+    return (await Promise.all(keys.map((k) => this.store.get<Goal>(k)))).filter((g): g is Goal => !!g);
   }
 
   async mastery(planId: string): Promise<MasteryMap> {
