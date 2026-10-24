@@ -151,7 +151,7 @@ function ExerciseBlock({ block, lang, onResult, onComplete }: BlockProps & { blo
   return (
     <div className="block exercise">
       <Markdown text={ex.prompt} />
-      <CodeEditor value={code} onChange={setCode} mode={ex.language} onRun={run} />
+      <CodeEditor value={code} onChange={setCode} mode={ex.language} onRun={run} label={t("codeEditor")} />
       <div className="row">
         <button onClick={run} disabled={busy}>
           {t("run")}

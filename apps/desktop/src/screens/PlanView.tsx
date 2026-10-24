@@ -65,7 +65,7 @@ export function PlanView({ planId }: { planId: string }) {
       <h1 dir="auto">{plan.title}</h1>
       <p className="muted">{t("planHelp")}</p>
       {pack && <PackLine pack={pack} objective={next} onPack={setPack} />}
-      <div className="progress" aria-label={t("progress")}>
+      <div className="progress" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={t("progress")}>
         <span style={{ inlineSize: `${pct}%` }} />
       </div>
       {next ? (

@@ -402,7 +402,7 @@ function VoicePanel() {
       />
       {v.listen === "always" && <p className="muted small">{t("listenNote")}</p>}
       <h3>{t("dialect")}</h3>
-      <select value={v.dialect} onChange={(e) => setVoice({ dialect: e.target.value as VoiceSettings["dialect"] })}>
+      <select aria-label={t("dialect")} value={v.dialect} onChange={(e) => setVoice({ dialect: e.target.value as VoiceSettings["dialect"] })}>
         {(["msa", "egyptian", "gulf", "levantine", "maghrebi"] as const).map((d) => (
           <option key={d} value={d}>
             {t(`dialect_${d}`)}
@@ -435,6 +435,7 @@ function AppearancePanel() {
       <Card>
         <h2>{t("uiLanguage")}</h2>
         <select
+          aria-label={t("uiLanguage")}
           value={settings.uiLang}
           onChange={(e) => {
             const uiLang = e.target.value as "en" | "ar";
@@ -509,6 +510,7 @@ function UsagePanel() {
         <h2>{t("liveBudget")}</h2>
         <p className="muted">{t("liveBudgetLead")}</p>
         <input
+          aria-label={t("liveBudget")}
           type="number"
           min={0}
           step="0.05"

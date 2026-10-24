@@ -59,7 +59,7 @@ export function Playground() {
         </button>
         {busy && <Spinner />}
       </div>
-      <CodeEditor key={lang} value={code[lang] ?? ""} onChange={(v) => setCode((c) => ({ ...c, [lang]: v }))} mode={lang} onRun={run} />
+      <CodeEditor label={t("codeEditor")} key={lang} value={code[lang] ?? ""} onChange={(v) => setCode((c) => ({ ...c, [lang]: v }))} mode={lang} onRun={run} />
       {err && <div className="error">{err}</div>}
       {out && <RunOutputView out={out} />}
     </main>

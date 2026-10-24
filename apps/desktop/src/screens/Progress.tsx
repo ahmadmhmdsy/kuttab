@@ -34,7 +34,7 @@ export function Progress() {
                 {done}/{plan.items.length} {t("mastered")}
               </small>
             </div>
-            <div className="progress" aria-label={t("progress")}>
+            <div className="progress" role="progressbar" aria-valuenow={Math.round(planProgress(plan, m) * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={t("progress")}>
               <span style={{ inlineSize: `${Math.round(planProgress(plan, m) * 100)}%` }} />
             </div>
             <ul className="skill-map">

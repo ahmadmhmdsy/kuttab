@@ -11,7 +11,7 @@ function langExt(mode: string) {
 }
 
 /** CodeMirror editor. Code is always left-to-right, even in an Arabic UI. */
-export function CodeEditor({ value, onChange, mode, onRun, readOnly }: { value: string; onChange?: (v: string) => void; mode: string; onRun?: () => void; readOnly?: boolean }) {
+export function CodeEditor({ value, onChange, mode, onRun, readOnly, label }: { value: string; onChange?: (v: string) => void; mode: string; onRun?: () => void; readOnly?: boolean; label?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
   const cb = useRef({ onChange, onRun });
@@ -26,6 +26,7 @@ export function CodeEditor({ value, onChange, mode, onRun, readOnly }: { value: 
         basicSetup,
         ...langExt(mode),
         EditorView.editable.of(!readOnly),
+        EditorView.contentAttributes.of({ "aria-label": label ?? "Code", "aria-multiline": "true" }),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) cb.current.onChange?.(u.state.doc.toString());
         }),

@@ -106,7 +106,7 @@ export function App() {
       {llm && (
         <div className="llm-progress" role="status">
           {t("loadingModel")}: {llm.model} — {Math.round(llm.progress * 100)}%
-          <div className="progress">
+          <div className="progress" role="progressbar" aria-valuenow={Math.round(llm.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={t("progress")}>
             <span style={{ inlineSize: `${Math.round(llm.progress * 100)}%` }} />
           </div>
         </div>

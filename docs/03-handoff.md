@@ -33,6 +33,14 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T21:00:00+03:00 — T-28 done: accessibility, CI, README; repo public
+
+- **State:** T-27 is `68341e0`; T-28 is committed with the README and pushed to the new public repo `github.com/ahmadmhmdsy/kuttab`.
+- **Built:** accessibility fixes (named progressbars with values, heading order, labels on the dialect, UI-language and budget inputs, a CodeMirror label `codeEditor`); `.github/workflows/app.yml` (checks, then unsigned Tauri builds on three systems, no secrets); a showcase README with screenshots in `docs/media/`.
+- **Verified:** axe-core over CDP shows 0 violations on every screen (English UI); typecheck; vitest 128/128; the local release compile was still running at commit time.
+- **Unverified / open:** the first CI run on GitHub is not checked yet. `context.yml` runs `rotate.py --check`, which fails on the oversized T-26 entry (append-only, older than this task). Signing, the updater host and the identifier `dev.kuttab.app` wait on the learner's decisions.
+- **Next:** read the first CI run; decide the M6 items.
+
 ## 2026-10-24T18:00:00+03:00 — T-27 done: images, looks, goals and reminders, several learners
 
 - **State:** T-27 built and checked in the app; not committed (T-26 is `9a25cf5`).

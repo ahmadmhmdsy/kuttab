@@ -113,7 +113,7 @@ export function Sources() {
 
       <div className="grid2">
         <Card>
-          <h3>{t("addText")}</h3>
+          <h2>{t("addText")}</h2>
           <form
             className="form"
             onSubmit={(e) => {
@@ -133,7 +133,7 @@ export function Sources() {
           </form>
         </Card>
         <Card>
-          <h3>{t("addFile")}</h3>
+          <h2>{t("addFile")}</h2>
           <label className="file-button">
             {t("addFile")}
             <input
@@ -157,7 +157,7 @@ export function Sources() {
             />
           </label>
           <p className="muted small">{t("fileTypesHelp")}</p>
-          <h3>{t("addUrl")}</h3>
+          <h2>{t("addUrl")}</h2>
           <form
             className="form"
             onSubmit={(e) => {

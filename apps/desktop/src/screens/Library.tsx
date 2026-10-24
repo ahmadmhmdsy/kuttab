@@ -120,7 +120,7 @@ export function Library() {
             const pct = Math.round(planProgress(plan, m) * 100);
             return (
               <Card key={plan.id} className="course">
-                <h3 dir="auto">{plan.title}</h3>
+                <h2 dir="auto">{plan.title}</h2>
                 {plan.description && (
                   <p className="muted small" dir="auto">
                     {plan.description}

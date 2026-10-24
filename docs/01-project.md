@@ -121,12 +121,12 @@ Platform adapter: Tauri (http, keystore, fs, sql, updater) | browser (future PWA
 | M3 | Your sources | PDF, DOCX, MD and URL ingestion. Local search. Grounded mode with citations | reached |
 | M4 | Packs and v0.1 | `.kuttab` import and export, three sample packs, TTS, speech input, gamification, builds for all three OSes | partial — all but signed builds for three OSes, CI and backup import |
 | M5 | Teacher agent | The tutor calls tools (charts, diagrams, math, inline quizzes, code runs, source search, learner memory), each a built-in plugin the learner can switch off in Settings. Plain-chat fallback for models without tool calls | done |
-| M6 | Release | Signed installers and auto-update for Windows, macOS and Linux; CI builds; backup import; accessibility pass | pending |
-| L1 | Live tutor core (decision 0002) | Agent-led session loop of beats; Chat and Voice (orb) modes; board on the end side; hold-to-talk; labs on the board; Read mode and post-session notes from one lesson record | pending |
-| L2 | Adaptation and learner profile | Level worked out as it goes; local learner profile from session notes (global and per track) with an editable "What the tutor knows about me" page; back-to-plan nudges; progress skills map | pending |
-| L3 | Track building and sources | Research once per track with a cached resource pack; in-app browser search with approval; provider and key search adapters; learner sources (files, images, URLs, audio, video transcripts); source-mix setting; mid-track web search on request | pending |
-| L4 | Voice options and local | Provider realtime voice; always-listening with Silero VAD; Piper voices; MSA and dialects; hardware check; HF and OpenAI-compatible local model linking; session budget with notified switch to local; low-compute mode | pending |
-| L5 | Extras | Image generation via a configured model; other tutor looks; goals with dates and reminders (tray opt-in); several learner profiles | pending |
+| M6 | Release | Signed installers and auto-update for Windows, macOS and Linux; CI builds; backup import; accessibility pass | partial — accessibility pass and CI (checks + unsigned builds) done; signing, auto-update and backup import wait on decisions |
+| L1 | Live tutor core (decision 0002) | Agent-led session loop of beats; Chat and Voice (orb) modes; board on the end side; hold-to-talk; labs on the board; Read mode and post-session notes from one lesson record | reached |
+| L2 | Adaptation and learner profile | Level worked out as it goes; local learner profile from session notes (global and per track) with an editable "What the tutor knows about me" page; back-to-plan nudges; progress skills map | reached |
+| L3 | Track building and sources | Research once per track with a cached resource pack; in-app browser search with approval; provider and key search adapters; learner sources (files, images, URLs, audio, video transcripts); source-mix setting; mid-track web search on request | reached |
+| L4 | Voice options and local | Provider realtime voice; always-listening with Silero VAD; Piper voices; MSA and dialects; hardware check; HF and OpenAI-compatible local model linking; session budget with notified switch to local; low-compute mode | reached |
+| L5 | Extras | Image generation via a configured model; other tutor looks; goals with dates and reminders (tray opt-in); several learner profiles | reached |
 
 ## Risks and mitigations
 
