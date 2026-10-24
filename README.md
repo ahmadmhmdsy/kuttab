@@ -2,6 +2,8 @@
 
 # Kuttab · كُتّاب
 
+**English** · [العربية](README.ar.md)
+
 **A private AI tutor that lives on your computer.**
 It teaches any topic: it plans the course, teaches it live, runs real code labs, and remembers how you learn.
 It works with the model you bring, cloud or local. No account, no server, no telemetry.
