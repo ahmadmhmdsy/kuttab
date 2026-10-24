@@ -13,3 +13,4 @@ export * from "./session.ts";
 export * from "./memory.ts";
 export * from "./adapt.ts";
 export * from "./track.ts";
+export * from "./vision.ts";

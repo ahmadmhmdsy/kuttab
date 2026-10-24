@@ -1,13 +1,30 @@
-// The learner's own sources: pasted text, files and web pages. Lessons and
-// grounded answers cite them; nothing here leaves the machine except the
-// passages sent to the chosen model.
+// The learner's own sources: pasted text, files, web pages, images, recordings
+// and videos. Lessons and grounded answers cite them; nothing here leaves the
+// machine except the passages (and images) sent to the chosen model. Audio and
+// video are transcribed by the local Whisper model; an online video gives its
+// published transcript and is never downloaded.
 import { useState } from "react";
-import { askGrounded, type GroundedAnswer, type Lang } from "@kuttab/engine";
-import { extractDocx, extractHtml, extractMarkdown, extractPdf, extractPlain, type Section, type Source, type SourceKind } from "@kuttab/kb";
+import { askGrounded, readImage, type GroundedAnswer, type Lang } from "@kuttab/engine";
+import {
+  extractDocx,
+  extractHtml,
+  extractImage,
+  extractMarkdown,
+  extractPdf,
+  extractPlain,
+  extractTranscript,
+  fetchYoutubeTranscript,
+  parseSubtitles,
+  youtubeId,
+  type Section,
+  type Source,
+  type SourceKind,
+} from "@kuttab/kb";
 import { useT } from "../i18n.ts";
 import { saveKb, services, useStore } from "../state.ts";
 import { embedFn, embedderKey, kbEmbed, makeCtx } from "../ai.ts";
 import { Card, ErrorBox, MicButton, Spinner } from "../components/common.tsx";
+import { WHISPER_SIZE_MB, transcribeTimed, whisperCached } from "../speech.ts";
 import { Markdown } from "../markdown.tsx";
 
 async function addSource(title: string, kind: SourceKind, sections: Section[], origin?: string): Promise<void> {
@@ -22,8 +39,32 @@ async function addSource(title: string, kind: SourceKind, sections: Section[], o
   await saveKb(first ? (embed ? embedderKey() : "") : undefined);
 }
 
-async function readFile(f: File): Promise<{ kind: SourceKind; sections: Section[] }> {
+const IMAGE = /.(png|jpe?g|webp|gif)$/;
+const AUDIO = /.(mp3|wav|m4a|ogg|oga|flac|aac|opus)$/;
+const VIDEO = /.(mp4|webm|mov|mkv|m4v)$/;
+const IMAGE_TYPE: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif" };
+
+export const FILE_TYPES = ".pdf,.docx,.md,.markdown,.txt,.html,.htm,.srt,.vtt,.png,.jpg,.jpeg,.webp,.gif,.mp3,.wav,.m4a,.ogg,.oga,.flac,.aac,.opus,.mp4,.webm,.mov,.mkv,.m4v";
+
+interface ReadOpts {
+  lang: Lang;
+  /** Asked before the first Whisper download; false cancels. */
+  allowWhisper: (mb: number) => boolean;
+}
+
+async function readFile(f: File, opts: ReadOpts): Promise<{ kind: SourceKind; sections: Section[] }> {
   const name = f.name.toLowerCase();
+  if (IMAGE.test(name)) {
+    const ext = name.split(".").pop()!;
+    const reading = await readImage(await makeCtx(), new Uint8Array(await f.arrayBuffer()), f.type || IMAGE_TYPE[ext], opts.lang);
+    return { kind: "image", sections: extractImage(reading) };
+  }
+  if (AUDIO.test(name) || VIDEO.test(name)) {
+    const size = useStore.getState().settings.whisper;
+    if (!whisperCached(size) && !opts.allowWhisper(WHISPER_SIZE_MB[size])) throw new Error("cancelled");
+    return { kind: VIDEO.test(name) ? "video" : "audio", sections: extractTranscript(await transcribeTimed(f, size)) };
+  }
+  if (name.endsWith(".srt") || name.endsWith(".vtt")) return { kind: "transcript", sections: extractTranscript(parseSubtitles(await f.text())) };
   if (name.endsWith(".pdf")) {
     const { preparePdfWorker } = await import("@kuttab/kb/pdf-browser");
     await preparePdfWorker();
@@ -48,6 +89,8 @@ export function Sources() {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
+  const uiLang = useStore((s) => s.settings.uiLang);
+  const lang: Lang = useStore((s) => s.profile?.lang) ?? uiLang;
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -92,22 +135,28 @@ export function Sources() {
         <Card>
           <h3>{t("addFile")}</h3>
           <label className="file-button">
-            {t("addFile")} (PDF, DOCX, MD, TXT)
+            {t("addFile")}
             <input
               type="file"
-              accept=".pdf,.docx,.md,.markdown,.txt,.html,.htm"
+              accept={FILE_TYPES}
               disabled={busy}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 e.target.value = "";
                 if (!f) return;
                 void run(async () => {
-                  const { kind, sections } = await readFile(f);
+                  const read = await readFile(f, { lang, allowWhisper: (mb) => confirm(t("whisperConfirm", { size: `${mb} MB` })) }).catch((e) => {
+                    if (e instanceof Error && e.message === "cancelled") return undefined;
+                    throw e;
+                  });
+                  if (!read) return;
+                  const { kind, sections } = read;
                   await addSource(f.name.replace(/\.[^.]+$/, ""), kind, sections, f.name);
                 });
               }}
             />
           </label>
+          <p className="muted small">{t("fileTypesHelp")}</p>
           <h3>{t("addUrl")}</h3>
           <form
             className="form"
@@ -116,6 +165,12 @@ export function Sources() {
               void run(async () => {
                 const u = new URL(url.trim());
                 if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error("Only http and https links are supported.");
+                if (youtubeId(u.href)) {
+                  const v = await fetchYoutubeTranscript(u.href, services().platform.fetch, lang);
+                  await addSource(v.title, "video", extractTranscript(v.segments), u.href);
+                  setUrl("");
+                  return;
+                }
                 const res = await services().platform.fetch(u.href);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const page = extractHtml(await res.text());

@@ -116,6 +116,15 @@ export async function transcribe(blob: Blob, size: WhisperSize, lang: Lang): Pro
   return (Array.isArray(out) ? out.map((o) => o.text).join(" ") : out.text).trim();
 }
 
+/** A learner's recording or video as timed segments (T-24). The language is detected. */
+export async function transcribeTimed(blob: Blob, size: WhisperSize): Promise<{ start: number; end?: number; text: string }[]> {
+  const [asr, audio] = await Promise.all([loadWhisper(size), decode16k(blob)]);
+  type Timed = { text: string; chunks?: { timestamp: [number, number | null]; text: string }[] };
+  const out = (await asr(audio, { task: "transcribe", chunk_length_s: 30, return_timestamps: true })) as Timed | Timed[];
+  const chunks = (Array.isArray(out) ? out : [out]).flatMap((o) => o.chunks ?? [{ timestamp: [0, null] as [number, null], text: o.text }]);
+  return chunks.map((c) => ({ start: c.timestamp[0] ?? 0, end: c.timestamp[1] ?? undefined, text: c.text }));
+}
+
 export interface Recorder {
   stop(): Promise<Blob>;
 }

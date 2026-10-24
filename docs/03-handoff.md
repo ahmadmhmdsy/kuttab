@@ -33,6 +33,14 @@ entry is prepended inside the markers below.
 ---
 
 <!-- rotate:begin -->
+## 2026-10-24T14:00:00+03:00 — T-24 done: learner sources beyond text
+
+- **State:** learners can add images, audio, video, subtitle files and YouTube links as sources, and each is searchable with a locator a citation can point at. T-23 is committed as `9d61024`; T-24 is not committed.
+- **Did:** new `packages/kb/src/media.ts`: `extractTranscript` groups timed speech into about 60-second sections located "m:ss–m:ss"; `parseSubtitles` (SRT, WebVTT); `parseTimedText` (YouTube classic and srv3); `youtubeId`; `fetchYoutubeTranscript` reads the caption track through the Android player endpoint, falling back to the watch page, preferring a written track in the learner's language; `extractImage` gives "text in the image" and "image description" sections. `SourceKind` gains image, audio and video. New `packages/engine/src/vision.ts` `readImage` asks the teacher model for OCR text and a description (JSON, one retry). Desktop `speech.ts` adds `transcribeTimed` (Whisper with timestamps, language detected). `Sources.tsx` routes files by type, asks before the first Whisper download, sends YouTube links to the transcript reader, and shows a file-types help line (en, ar).
+- **Verified:** tsc clean (desktop, engine, kb); vitest 95/95. Tauri over CDP: a YouTube video gave 286 segments in 18 sections and a keyword search hit "4:09–5:11"; a canvas PNG read by vision gave correct text and description and was found; a WAV through cached whisper-tiny gave "0:00–0:04" and was found. The Sources screen in Arabic shows the help line and the new accept list.
+- **Unverified / open:** downloading an online video for Whisper (decision 0002 item 19, approval-gated) is deferred; only the transcript route exists. Long audio or video is decoded whole in memory, so very long files may fail. Images need a teacher model with vision; others fail with the provider's message. Videos without captions are refused with a plain message. YouTube may change its player endpoint; the watch-page fallback covers some of that.
+- **Next:** the next pending task in `docs/04-tasks.md`.
+
 ## 2026-10-24T13:45:00+03:00 — T-23 done: web search adapters
 
 - **State:** new courses and the plan page can search the web through the learner's chosen route. T-22 is committed as `be997b4`; T-23 is not committed.

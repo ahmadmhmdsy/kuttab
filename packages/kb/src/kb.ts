@@ -5,7 +5,7 @@
 import { chunkSections, type Chunk, type Section } from "./chunk.ts";
 import { tokenize } from "./text.ts";
 
-export type SourceKind = "text" | "markdown" | "pdf" | "docx" | "url" | "transcript" | "pack";
+export type SourceKind = "text" | "markdown" | "pdf" | "docx" | "url" | "transcript" | "pack" | "image" | "audio" | "video";
 
 export interface Source {
   id: string;
